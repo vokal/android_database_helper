@@ -28,7 +28,9 @@ public abstract class AbstractDataModel {
         for (int i = 0; i < mTable.getColumns().size(); i++) {
             SQLiteTable.Column column = mTable.getColumns().valueAt(i);
             Object value = getValueOfColumn(column.name);
-            if (value == null) continue;
+            if (value == null) {
+                continue;
+            }
 
             if (value instanceof Long) {
                 values.put(column.name, (Long) value);
@@ -54,7 +56,7 @@ public abstract class AbstractDataModel {
         aContext.getContentResolver().insert(mContentUri, values);
     }
 
-    void setTableSchema(SQLiteTable aTable) {
+    void setTable(SQLiteTable aTable) {
         mTable = aTable;
     }
 

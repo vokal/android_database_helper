@@ -56,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 modelObj.setContentUri(Uri.parse(String.format("content://%s/%s", AUTHORITY, tableName)));
                 SQLiteTable.Builder builder = new SQLiteTable.Builder(tableName);
                 SQLiteTable table = modelObj.buildTableSchema(builder);
-                modelObj.setTableSchema(table);
+                modelObj.setTable(table);
 
                 index = TABLES.size();
                 TABLE_NAMES.append(index, tableName);
