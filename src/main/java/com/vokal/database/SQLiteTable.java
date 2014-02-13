@@ -40,11 +40,11 @@ public class SQLiteTable {
         return mTableName;
     }
 
-    SparseArray<Column> getColumns() {
+    protected SparseArray<Column> getColumns() {
         return mColumns;
     }
 
-    String getCreateSQL() {
+    protected String getCreateSQL() {
         if (isEmpty(mCreateSQL)) {
             ArrayList<Column> keys = new ArrayList<Column>();
             ArrayList<Column> unique = new ArrayList<Column>();
@@ -107,7 +107,7 @@ public class SQLiteTable {
         return mCreateSQL;
     }
 
-    private String getColumnDef(Column column) {
+    protected String getColumnDef(Column column) {
         String type = "NULL";
         switch (column.type) {
             case Cursor.FIELD_TYPE_INTEGER: type = "INTEGER"; break;
