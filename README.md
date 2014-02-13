@@ -30,11 +30,11 @@ Implement a concrete `AbstractDataModel` class:
        		//  - addStringColumn, addIntegerColumn, etc..
         	//  - call primaryKey(), autoincrement(), unique() after adding a column
         	// 
-        	// ie. aBuilder.addIntegerColumn("_ID").primaryKey().autoincrement()
-        	//             .addStringColumn("name").unique();
-        	//
         	// (optionally: just return your own SQLiteTable if Builder is insufficient)
         
+        	aBuilder.addIntegerColumn("_ID").primaryKey().autoincrement()
+                    .addStringColumn("name").unique();
+                    
         	return aBuilder.build();
     	}
     
