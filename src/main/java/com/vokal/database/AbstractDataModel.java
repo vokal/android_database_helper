@@ -21,13 +21,13 @@ public abstract class AbstractDataModel {
 
     protected abstract SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder);
 
-    protected abstract Object supplyContentValues(ContentValues aValues, String aColumnName);
+    protected abstract Object getValueOfColumn(String aColumnName);
 
     public void save(Context aContext) {
         ContentValues values = new ContentValues();
         for (int i = 0; i < mTable.getColumns().size(); i++) {
             SQLiteTable.Column column = mTable.getColumns().valueAt(i);
-            Object value = supplyContentValues(values, column.name);
+            Object value = getValueOfColumn(column.name);
             if (value == null) continue;
 
             if (value instanceof Long) {
