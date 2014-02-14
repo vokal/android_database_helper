@@ -11,6 +11,8 @@ import android.util.SparseArray;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import hugo.weaving.DebugLog;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     private static final String TAG = DatabaseHelper.class.getSimpleName();
@@ -43,11 +45,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return NAME;
     }
+
     /*
      * registers a table with provider, returns the content:// Uri
      */
+    @DebugLog
     public static Uri registerModel(Class<? extends AbstractDataModel> aModelClass) {
         try {
+            Log.d(TAG, "registerModel: " + aModelClass.getSimpleName());
             Constructor<? extends AbstractDataModel> ctor = aModelClass.getConstructor(new Class[]{});
             AbstractDataModel modelObj = ctor.newInstance(new Object[]{});
             String tableName = modelObj.getTableName();
@@ -66,6 +71,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 URI_ID_MATCHER.addURI(AUTHORITY, tableName.concat("/#"), index);
             }
 
+            Log.i(TAG, "" + modelObj.getContentUri());
             return modelObj.getContentUri();
         } catch (NoSuchMethodException e) {
             e.printStackTrace();
@@ -94,6 +100,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    @DebugLog
     @Override
     public void onCreate(SQLiteDatabase db) {
         for (int i = 0; i < TABLES.size(); i++) {
