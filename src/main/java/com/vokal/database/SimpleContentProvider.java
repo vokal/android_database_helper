@@ -6,6 +6,8 @@ import android.database.SQLException;
 import android.database.sqlite.*;
 import android.net.Uri;
 
+import java.util.HashMap;
+
 public class SimpleContentProvider extends ContentProvider {
 
     protected DatabaseHelper mHelper;

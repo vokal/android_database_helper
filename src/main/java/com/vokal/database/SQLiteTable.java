@@ -3,7 +3,6 @@ package com.vokal.database;
 import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
-import android.util.SparseArray;
 
 import java.util.ArrayList;
 
@@ -14,7 +13,6 @@ public class SQLiteTable {
     private static final String TAG = SQLiteTable.class.getSimpleName();
 
     static class Column {
-
         public int     type;
         public String  name;
         public boolean primary_key;
@@ -22,14 +20,18 @@ public class SQLiteTable {
         public boolean unique;
     }
 
-    private String              mTableName;
-    private SparseArray<Column> mColumns;
+    private String            mTableName;
+    private ArrayList<Column> mColumns;
+    private String[]          mPrimaryKey;
+    private String[]          mUnique;
+    private String[]          mIndex;
 
     private String mCreateSQL;
+    private String mUpdateSQL;
 
     public SQLiteTable(String aTableName) {
         mTableName = aTableName;
-        mColumns = new SparseArray<Column>();
+        mColumns = new ArrayList<Column>();
     }
 
     public void setTableName(String aTableName) {
@@ -40,37 +42,18 @@ public class SQLiteTable {
         return mTableName;
     }
 
-    protected SparseArray<Column> getColumns() {
+    protected ArrayList<Column> getColumns() {
         return mColumns;
     }
 
     protected String getCreateSQL() {
         if (isEmpty(mCreateSQL)) {
-            ArrayList<Column> keys = new ArrayList<Column>();
-            ArrayList<Column> unique = new ArrayList<Column>();
-
-            // accumulate keys & unique
-            for (int i = 0; i < mColumns.size(); i++) {
-                Column col = mColumns.valueAt(i);
-                if (col.primary_key) {
-                    keys.add(col);
-                }
-                if (col.unique) {
-                    unique.add(col);
-                }
-            }
-
-            Log.d(TAG, String.format("building SQL for `%s`: columns=%d, keys=%d, unique=%d", mTableName,
-                                     mColumns.size(), keys.size(), unique.size()));
-
             ArrayList<String> columnDefs = new ArrayList<String>();
 
-
-            for (int i = 0; i < mColumns.size(); i++) {
-                Column col = mColumns.valueAt(i);
+            for (Column col : mColumns) {
                 String colDef = getColumnDef(col);
 
-                if (col.primary_key && keys.size() == 1) {
+                if (col.primary_key) {
                     colDef = colDef.concat(" PRIMARY KEY");
                     if (col.autoincrement) {
                         colDef = colDef.concat(" AUTOINCREMENT");
@@ -79,32 +62,32 @@ public class SQLiteTable {
                     continue; // single primary key is inherently unique
                 }
 
-                if (col.unique && unique.size() == 1) {
+                if (col.unique) {
                     colDef = colDef.concat(" UNIQUE");
                 }
-
                 columnDefs.add(colDef);
             }
-            if (keys.size() > 1) {
-                ArrayList<String> keyNames = new ArrayList<String>();
-                for (Column column : keys) {
-                    keyNames.add(column.name);
-                }
-                columnDefs.add(" PRIMARY KEY (".concat(TextUtils.join(", ", keyNames).concat(")")));
+
+            if (mPrimaryKey != null) {
+                columnDefs.add(String.format("PRIMARY KEY (%s)", TextUtils.join(", ", mPrimaryKey)));
             }
-            if (unique.size() > 1) {
-                ArrayList<String> uniqueNames = new ArrayList<String>();
-                for (Column column : unique) {
-                    uniqueNames.add(column.name);
-                }
-                columnDefs.add(" UNIQUE (".concat(TextUtils.join(", ", uniqueNames).concat(")")));
+            if (mUnique != null) {
+                columnDefs.add(String.format("UNIQUE (%s)", TextUtils.join(", ", mUnique)));
+            }
+            if (mIndex != null) {
+                columnDefs.add(String.format("INDEX (%s)", TextUtils.join(", ", mIndex)));
             }
 
-            mCreateSQL = "CREATE TABLE " + mTableName + " (" + TextUtils.join(", ", columnDefs) + ");";
+            mCreateSQL = String.format("CREATE TABLE %s (%s);", mTableName, TextUtils.join(", ", columnDefs));
         }
 
         Log.d(TAG, "create SQL: " + mCreateSQL);
         return mCreateSQL;
+    }
+
+    protected String getUpdateSQL() {
+        // TODO:
+        return null;
     }
 
     protected String getColumnDef(Column column) {
@@ -163,6 +146,21 @@ public class SQLiteTable {
             return this;
         }
 
+        public Builder primaryKey(String... aColumns) {
+            mTable.mPrimaryKey = aColumns;
+            return this;
+        }
+
+        public Builder unique(String... aColumns) {
+            mTable.mUnique = aColumns;
+            return this;
+        }
+
+        public Builder index(String... aColumns) {
+            mTable.mIndex = aColumns;
+            return this;
+        }
+
         public SQLiteTable build() {
             return mTable;
         }
@@ -172,7 +170,7 @@ public class SQLiteTable {
             mLastColumn.name = aName;
             mLastColumn.type = aType;
 
-            mTable.mColumns.append(mNextIndex++, mLastColumn);
+            mTable.mColumns.add(mLastColumn);
             return this;
         }
 
