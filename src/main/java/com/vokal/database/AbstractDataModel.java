@@ -4,13 +4,12 @@ import android.net.Uri;
 
 public abstract class AbstractDataModel {
 
-    private Uri mContentUri;
-    private SQLiteTable mTable;  // TODO: guarantee that mTable.mColumns is still created if Builder is not used
+//    private SQLiteTable mTable;  // TODO: guarantee that mTable.mColumns is still created if Builder is not used
 
     public AbstractDataModel() {}
 
     public final Uri getContentUri() {
-        return mContentUri;
+        return DatabaseHelper.getContentUri(getClass());
     }
 
     protected abstract SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder);
@@ -52,11 +51,4 @@ public abstract class AbstractDataModel {
 //        aContext.getContentResolver().insert(mContentUri, values);
 //    }
 
-    void setContentUri(Uri aUri) {
-        mContentUri = aUri;
-    }
-
-    void setTable(SQLiteTable aTable) {
-        mTable = aTable;
-    }
 }
