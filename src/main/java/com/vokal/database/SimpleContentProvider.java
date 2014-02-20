@@ -17,11 +17,15 @@ import static android.text.TextUtils.isEmpty;
 public class SimpleContentProvider extends ContentProvider {
 
     private static final String TAG = SimpleContentProvider.class.getSimpleName();
+    private static final String NAME = SimpleContentProvider.class.getCanonicalName();
+
     private static final String KEY_DB_NAME = "database_name";
     private static final String KEY_DB_VERSION = "database_version";
 
     static final UriMatcher URI_MATCHER    = new UriMatcher(UriMatcher.NO_MATCH);
     static final UriMatcher URI_ID_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
+
+    private static ProviderInfo sProviderInfo;
 
     static String AUTHORITY = "com.vokal.database";
     static String DB_NAME   = "vokal.db";
@@ -29,45 +33,50 @@ public class SimpleContentProvider extends ContentProvider {
 
     protected DatabaseHelper mHelper;
 
-    @Override
-    public boolean onCreate() {
-        Log.i(TAG, "onCreate() called...");
-        ComponentName comp = new ComponentName(getContext(), getClass());
+    public static String getContentAuthority(Context aContext) {
         try {
-            ProviderInfo pi = getContext().getPackageManager().getProviderInfo(comp, PackageManager.GET_META_DATA);
+            Class<?> clazz = Class.forName(NAME);
+            ComponentName component = new ComponentName(aContext, clazz);
+            ProviderInfo pi = getProviderInfo(aContext);
             if (pi != null) {
                 if (!isEmpty(pi.authority)) AUTHORITY = pi.authority;
-                if (pi.metaData != null) {
-                    if (pi.metaData.containsKey(KEY_DB_NAME))
-                        DB_NAME = pi.metaData.getString(KEY_DB_NAME);
-                    DB_VERSION = pi.metaData.getInt(KEY_DB_VERSION, DB_VERSION);
-                }
             }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "AUTHORITY: " + AUTHORITY);
+        return AUTHORITY;
+    }
+
+    private static ProviderInfo getProviderInfo(Context aContext)
+            throws ClassNotFoundException, PackageManager.NameNotFoundException {
+        if (sProviderInfo == null) {
+            Class<?> clazz = Class.forName(NAME);
+            ComponentName component = new ComponentName(aContext, clazz);
+            PackageManager pm = aContext.getPackageManager();
+            if (pm != null) {
+                sProviderInfo = pm.getProviderInfo(component, PackageManager.GET_META_DATA);
+            }
+        }
+        return sProviderInfo;
+    }
+
+    @Override
+    public boolean onCreate() {
+        getContentAuthority(getContext());
+        if (sProviderInfo != null && sProviderInfo.metaData != null) {
+            if (sProviderInfo.metaData.containsKey(KEY_DB_NAME))
+                DB_NAME = sProviderInfo.metaData.getString(KEY_DB_NAME);
+            DB_VERSION = sProviderInfo.metaData.getInt(KEY_DB_VERSION, DB_VERSION);
+        }
+
         mHelper = new DatabaseHelper(getContext(), DB_NAME, DB_VERSION, AUTHORITY);
         return true;
     }
 
     @Override
     public String getType(Uri uri) {
-        return null;
-    }
-
-
-    String getTableFromUri(Uri aUri) {
-        int match = URI_MATCHER.match(aUri);
-        if (match == -1) {
-            match = URI_ID_MATCHER.match(aUri);
-            if (match == -1) {
-                Log.w(TAG, "no table for: " + aUri);
-            }
-        }
-        if (match >= 0) {
-            return DatabaseHelper.TABLE_NAMES.get(match);
-        }
         return null;
     }
 
@@ -157,5 +166,18 @@ public class SimpleContentProvider extends ContentProvider {
         return db.delete(table, aSelection, aSelectionArgs);
     }
 
+    protected String getTableFromUri(Uri aUri) {
+        int match = URI_MATCHER.match(aUri);
+        if (match == -1) {
+            match = URI_ID_MATCHER.match(aUri);
+            if (match == -1) {
+                Log.w(TAG, "no table for: " + aUri);
+            }
+        }
+        if (match >= 0) {
+            return DatabaseHelper.TABLE_NAMES.get(match);
+        }
+        return null;
+    }
 
 }
