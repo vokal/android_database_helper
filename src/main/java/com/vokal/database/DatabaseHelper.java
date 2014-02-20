@@ -9,8 +9,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-import hugo.weaving.DebugLog;
-
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final ArrayList<String>      TABLE_NAMES     = new ArrayList<String>();
@@ -24,7 +22,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /*
      * registers a table with authority, uses lowercase class name as table name
      */
-    @DebugLog
+    @SafeVarargs
     public static void registerModel(Context aContext, Class<? extends AbstractDataModel>... aModelClass) {
         if (aModelClass != null) {
             for (Class<? extends AbstractDataModel> clazz : aModelClass) {
@@ -36,7 +34,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /*
      * registers a table with provider with authority using specified table name
      */
-    @DebugLog
     public static void registerModel(Context aContext, Class<? extends AbstractDataModel> aModelClass, String aTableName) {
         if (!TABLE_MAP.values().contains(aTableName)) {
             int matcher_index = TABLE_NAMES.size();
@@ -57,7 +54,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return CONTENT_URI_MAP.get(aTableName);
     }
 
-    @DebugLog
     @Override
     public void onCreate(SQLiteDatabase db) {
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
@@ -82,7 +78,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    @DebugLog
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
        // TODO
