@@ -7,49 +7,51 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.*;
 import android.net.Uri;
-import android.text.TextUtils;
 import android.util.Log;
-
-import java.util.HashMap;
 
 import static android.text.TextUtils.isEmpty;
 
 public class SimpleContentProvider extends ContentProvider {
 
-    private static final String TAG = SimpleContentProvider.class.getSimpleName();
+    private static final String TAG  = SimpleContentProvider.class.getSimpleName();
     private static final String NAME = SimpleContentProvider.class.getCanonicalName();
 
-    private static final String KEY_DB_NAME = "database_name";
+    private static final String KEY_DB_NAME    = "database_name";
     private static final String KEY_DB_VERSION = "database_version";
+
+    private static final String DEFAULT_AUTHORITY = "com.vokal.database";
+    private static final String DEFAULT_NAME      = "vokal.db";
 
     static final UriMatcher URI_MATCHER    = new UriMatcher(UriMatcher.NO_MATCH);
     static final UriMatcher URI_ID_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
     private static ProviderInfo sProviderInfo;
 
-    static String AUTHORITY = "com.vokal.database";
-    static String DB_NAME   = "vokal.db";
-    static int    DB_VERSION = 1;
+    static String sContentAuthority;
+    static String sDatabaseName;
+    static int sDatabaseVersion = 1;
 
     protected DatabaseHelper mHelper;
 
     public static String getContentAuthority(Context aContext) {
-        try {
-            Class<?> clazz = Class.forName(NAME);
-            ComponentName component = new ComponentName(aContext, clazz);
-            ProviderInfo pi = getProviderInfo(aContext);
-            if (pi != null) {
-                if (!isEmpty(pi.authority)) AUTHORITY = pi.authority;
+        if (sContentAuthority == null) {
+            sContentAuthority = DEFAULT_AUTHORITY;
+            try {
+                getProviderInfo(aContext);
+                if (sProviderInfo != null) {
+                    if (!isEmpty(sProviderInfo.authority))
+                        sContentAuthority = sProviderInfo.authority;
+                }
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (PackageManager.NameNotFoundException e) {
+                e.printStackTrace();
             }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
         }
-        return AUTHORITY;
+        return sContentAuthority;
     }
 
-    private static ProviderInfo getProviderInfo(Context aContext)
+    private static void getProviderInfo(Context aContext)
             throws ClassNotFoundException, PackageManager.NameNotFoundException {
         if (sProviderInfo == null) {
             Class<?> clazz = Class.forName(NAME);
@@ -59,19 +61,20 @@ public class SimpleContentProvider extends ContentProvider {
                 sProviderInfo = pm.getProviderInfo(component, PackageManager.GET_META_DATA);
             }
         }
-        return sProviderInfo;
     }
 
     @Override
     public boolean onCreate() {
         getContentAuthority(getContext());
         if (sProviderInfo != null && sProviderInfo.metaData != null) {
-            if (sProviderInfo.metaData.containsKey(KEY_DB_NAME))
-                DB_NAME = sProviderInfo.metaData.getString(KEY_DB_NAME);
-            DB_VERSION = sProviderInfo.metaData.getInt(KEY_DB_VERSION, DB_VERSION);
+            sDatabaseName = DEFAULT_NAME;
+            if (sProviderInfo.metaData.containsKey(KEY_DB_NAME)) {
+                sDatabaseName = sProviderInfo.metaData.getString(KEY_DB_NAME);
+            }
+            sDatabaseVersion = sProviderInfo.metaData.getInt(KEY_DB_VERSION, sDatabaseVersion);
         }
 
-        mHelper = new DatabaseHelper(getContext(), DB_NAME, DB_VERSION, AUTHORITY);
+        mHelper = new DatabaseHelper(getContext(), sDatabaseName, sDatabaseVersion);
         return true;
     }
 
