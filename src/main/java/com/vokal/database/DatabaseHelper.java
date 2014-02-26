@@ -1,5 +1,6 @@
 package com.vokal.database;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -66,6 +67,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 SQLiteTable.Builder builder = new SQLiteTable.Builder(aTableName);
                 SQLiteTable table = modelObj.buildTableSchema(builder);
                 db.execSQL(table.getCreateSQL());
+                if (table.getSeedValues() != null) {
+                    for (ContentValues values : table.getSeedValues()) {
+                        db.insert(table.getTableName(), table.getNullHack(), values);
+                    }
+                }
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {

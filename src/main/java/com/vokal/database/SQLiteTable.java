@@ -1,5 +1,6 @@
 package com.vokal.database;
 
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
@@ -13,6 +14,7 @@ public class SQLiteTable {
     private static final String TAG = SQLiteTable.class.getSimpleName();
 
     static class Column {
+
         public int     type;
         public String  name;
         public boolean primary_key;
@@ -27,6 +29,9 @@ public class SQLiteTable {
     private String[]          mIndex;
 
     private String mCreateSQL;
+    private ContentValues[] mSeed;
+    private String mNullHack;
+
     private String mUpdateSQL;
 
     public SQLiteTable(String aTableName) {
@@ -41,6 +46,8 @@ public class SQLiteTable {
     public String getTableName() {
         return mTableName;
     }
+
+    // TODO: query columns after onCreate/onUpdate since Builder may not have been used to make SQL
 
     protected ArrayList<Column> getColumns() {
         return mColumns;
@@ -85,9 +92,17 @@ public class SQLiteTable {
         return mCreateSQL;
     }
 
+    protected ContentValues[] getSeedValues() {
+        return mSeed;
+    }
+
     protected String getUpdateSQL() {
         // TODO:
         return null;
+    }
+
+    protected String getNullHack() {
+        return mNullHack;
     }
 
     protected String getColumnDef(Column column) {
@@ -158,6 +173,16 @@ public class SQLiteTable {
 
         public Builder index(String... aColumns) {
             mTable.mIndex = aColumns;
+            return this;
+        }
+
+        public Builder seed(ContentValues... aSeed) {
+            return seed(null, aSeed);
+        }
+
+        public Builder seed(String aNullHack, ContentValues... aSeed) {
+            mTable.mSeed = aSeed;
+            mTable.mNullHack = aNullHack;
             return this;
         }
 
