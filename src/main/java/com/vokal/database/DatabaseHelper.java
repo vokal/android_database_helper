@@ -2,12 +2,16 @@ package com.vokal.database;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.os.BadParcelableException;
+import android.text.TextUtils;
+import android.util.Log;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.*;
 import java.util.*;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
@@ -21,7 +25,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     /*
-     * registers a table with authority, uses lowercase class name as table name
+     * registers a table with authority, uses lowercase class name as table name(s)
      */
     @SafeVarargs
     public static void registerModel(Context aContext, Class<? extends AbstractDataModel>... aModelClass) {
@@ -58,34 +62,84 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
-            Class aModelClass = entry.getKey();
-            String aTableName = entry.getValue();
-            try {
-                Constructor<? extends AbstractDataModel> ctor = aModelClass.getConstructor(new Class[]{});
-                AbstractDataModel modelObj = ctor.newInstance(new Object[]{});
-
-                SQLiteTable.Builder builder = new SQLiteTable.Builder(aTableName);
-                SQLiteTable table = modelObj.buildTableSchema(builder);
+            SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
+            if (creator != null) {
+                SQLiteTable.Builder builder = new SQLiteTable.Builder(entry.getValue());
+                SQLiteTable table = creator.buildTableSchema(builder);
                 db.execSQL(table.getCreateSQL());
+                if (table.getIndicesSQL() != null) {
+                    for (String indexSQL : table.getIndicesSQL()) {
+                        db.execSQL(indexSQL);
+                    }
+                }
                 if (table.getSeedValues() != null) {
                     for (ContentValues values : table.getSeedValues()) {
                         db.insert(table.getTableName(), table.getNullHack(), values);
                     }
                 }
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (InstantiationException e) {
-                e.printStackTrace();
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
             }
         }
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-       // TODO
+        Cursor tables = db.query("sqlite_master", null, "type='table'", null, null, null, null);
+        ArrayList<String> tableNames = new ArrayList<String>();
+        if (tables != null) {
+            for (int i = 0; i < tables.getCount(); i++) {
+                tables.moveToPosition(i);
+                tableNames.add(tables.getString(tables.getColumnIndex("name")));
+            }
+        }
+        Log.d("DatabaseHelper", "current tables: " + TextUtils.join(", ", tableNames));
+
+        for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
+            SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
+            if (creator != null) {
+                SQLiteTable.Builder builder = new SQLiteTable.Builder(entry.getValue());
+                SQLiteTable table = creator.buildTableSchema(builder);
+
+                if (!tableNames.contains(table.getTableName())) {
+                    db.execSQL(table.getCreateSQL());
+                } else {
+                    String[] updates = table.getUpdateSQL();
+                    for (String updateSQL : updates) {
+                        db.execSQL(updateSQL);
+                    }
+                }
+                if (table.getIndicesSQL() != null) {
+                    for (String indexSQL : table.getIndicesSQL()) {
+                        db.execSQL(indexSQL);
+                    }
+                }
+                if (table.getSeedValues() != null) {
+                    for (ContentValues values : table.getSeedValues()) {
+                        db.insert(table.getTableName(), table.getNullHack(), values);
+                    }
+                }
+            }
+        }
+    }
+
+    SQLiteTable.TableCreator getTableCreator(Class aModelClass) {
+        String className = aModelClass.getSimpleName();
+        SQLiteTable.TableCreator creator = null;
+        try {
+            Field f = aModelClass.getField("TABLE_CREATOR");
+            creator = (SQLiteTable.TableCreator) f.get(null);
+        } catch (ClassCastException e) {
+            throw new IllegalStateException("ADHD protocol requires the object called TABLE_CREATOR " +
+                                                    "on class " + className + " to be a SQLiteTable.TableCreator");
+        } catch (NoSuchFieldException e) {
+            throw new IllegalStateException("ADHD protocol requires a SQLiteTable.TableCreator " +
+                                                    "object called TABLE_CREATOR on class " + className);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("ADHD protocol requires the TABLE_CREATOR object " +
+                                                    "to be accessible on class " + className);
+        } catch (NullPointerException e) {
+            throw new IllegalStateException("ADHD protocol requires the TABLE_CREATOR " +
+                                                    "object to be static on class " + className);
+        }
+        return creator;
     }
 }

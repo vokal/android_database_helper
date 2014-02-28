@@ -3,10 +3,10 @@ package com.vokal.database;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
-import android.database.Cursor;
-import android.database.SQLException;
+import android.database.*;
 import android.database.sqlite.*;
 import android.net.Uri;
+import android.provider.BaseColumns;
 import android.util.Log;
 
 import static android.text.TextUtils.isEmpty;
@@ -83,104 +83,166 @@ public class SimpleContentProvider extends ContentProvider {
         return null;
     }
 
-    @Override
-    public Uri insert(Uri aUri, ContentValues aValues) {
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        String table = getTableFromUri(aUri);
-
-        long id = db.insertWithOnConflict(table, "", aValues, SQLiteDatabase.CONFLICT_REPLACE);
-
-        if (id > -1) {
-            Uri rowUri = ContentUris.withAppendedId(aUri, id);
-
-            getContext().getContentResolver().notifyChange(aUri, null);
-            return rowUri;
-        }
-
-        throw new SQLException("Failed to insert row into " + aUri);
-    }
-
-    @Override
-    public int update(Uri aUri, ContentValues aValues, String aSelection, String[] aSelectionArgs) {
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        String table = getTableFromUri(aUri);
-
-        int result = db.update(table, aValues, aSelection, aSelectionArgs);
-
-        getContext().getContentResolver().notifyChange(aUri, null);
-
-        return result;
-    }
-
-
-    @Override
-    public int bulkInsert(Uri aUri, ContentValues[] aValues) {
-        String table = getTableFromUri(aUri);
-        int result = 0;
-
-        int conflictRule = SQLiteDatabase.CONFLICT_REPLACE;
-
-        SQLiteDatabase db = mHelper.getWritableDatabase();
-        db.beginTransaction();
-
-        try {
-            for (ContentValues value : aValues) {
-                db.insertWithOnConflict(table, "", value, conflictRule);
-                result++;
-            }
-
-            db.setTransactionSuccessful();
-            if (result > 0) {
-                getContext().getContentResolver().notifyChange(aUri, null);
-            }
-        } catch (SQLiteConstraintException e) {
-            e.printStackTrace();
-        } finally {
-            db.endTransaction();
-        }
-
-        return result;
+    public int getConflictRule(String aTableName) {
+        return SQLiteDatabase.CONFLICT_REPLACE;
     }
 
     @Override
     public Cursor query(Uri aUri, String[] aProjection, String aSelection, String[] aSelectionArgs, String aSortOrder) {
         SQLiteQueryBuilder builder = new SQLiteQueryBuilder();
         SQLiteDatabase db = mHelper.getReadableDatabase();
+        assert db != null;
 
-        builder.setTables(getTableFromUri(aUri));
+        Cursor result = null;
+        UriMatch match = getTableFromUri(aUri);
+        if (match != null) {
+            builder.setTables(match.table);
 
-        Cursor result = builder.query(db, aProjection, aSelection,
-                                      aSelectionArgs, null, null, aSortOrder);
-        if (result != null) {
-            result.setNotificationUri(getContext().getContentResolver(), aUri);
+            String where = aSelection;
+            String[] args = aSelectionArgs;
+            if (match.item) {
+//                builder.appendWhere("_ID=" + aUri.getLastPathSegment());
+                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
+                args = DatabaseUtils.appendSelectionArgs(args, new String[]{aUri.getLastPathSegment()});
+            }
+
+            result = builder.query(db, aProjection, where, args, null, null, aSortOrder);
+
+            /*if (result != null) {
+                Context ctx = getContext();
+                assert ctx != null;
+                result.setNotificationUri(ctx.getContentResolver(), aUri);
+            }*/
         }
 
         return result;
     }
 
     @Override
-     public int delete(Uri aUri, String aSelection, String[] aSelectionArgs) {
+    public Uri insert(Uri aUri, ContentValues aValues) {
         SQLiteDatabase db = mHelper.getWritableDatabase();
+        assert db != null;
 
-        String table = getTableFromUri(aUri);
+        Uri result = null;
+        UriMatch match = getTableFromUri(aUri);
+        if (match != null) {
+            long id = db.insertWithOnConflict(match.table, "", aValues, getConflictRule(match.table));
 
-        getContext().getContentResolver().notifyChange(aUri, null);
+            if (id > -1) {
+                Context ctx = getContext();
+                assert ctx != null;
+                ctx.getContentResolver().notifyChange(aUri, null);
 
-        return db.delete(table, aSelection, aSelectionArgs);
-    }
-
-    protected String getTableFromUri(Uri aUri) {
-        int match = URI_MATCHER.match(aUri);
-        if (match == -1) {
-            match = URI_ID_MATCHER.match(aUri);
-            if (match == -1) {
-                Log.w(TAG, "no table for: " + aUri);
+                result = ContentUris.withAppendedId(aUri, id);
             }
         }
-        if (match >= 0) {
-            return DatabaseHelper.TABLE_NAMES.get(match);
+
+        return result;
+    }
+
+    @Override
+    public int update(Uri aUri, ContentValues aValues, String aSelection, String[] aSelectionArgs) {
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        assert db != null;
+
+        int result = 0;
+        UriMatch match = getTableFromUri(aUri);
+        if (match != null) {
+            String where = aSelection;
+            String[] args = aSelectionArgs;
+            if (match.item) {
+                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
+                args = DatabaseUtils.appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
+            }
+
+            result = db.update(match.table, aValues, where, args);
+
+            if (result > 0) {
+                Context ctx = getContext();
+                assert ctx != null;
+                ctx.getContentResolver().notifyChange(aUri, null);
+            }
         }
-        return null;
+        return result;
+    }
+
+    @Override
+    public int bulkInsert(Uri aUri, ContentValues[] aValues) {
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        assert db != null;
+
+        int result = 0;
+        UriMatch match = getTableFromUri(aUri);
+        if (match != null) {
+            db.beginTransaction();
+
+            try {
+                for (ContentValues value : aValues) {
+                    db.insertWithOnConflict(match.table, "", value, getConflictRule(match.table));
+                    result++;
+                }
+
+                db.setTransactionSuccessful();
+            } catch (SQLiteConstraintException e) {
+                e.printStackTrace();
+            } finally {
+                db.endTransaction();
+
+                if (result > 0) {
+                    Context ctx = getContext();
+                    assert ctx != null;
+                    ctx.getContentResolver().notifyChange(aUri, null);
+                }
+            }
+        }
+
+        return result;
+    }
+
+
+    @Override
+    public int delete(Uri aUri, String aSelection, String[] aSelectionArgs) {
+        SQLiteDatabase db = mHelper.getWritableDatabase();
+        assert db != null;
+
+        int result = 0;
+        UriMatch match = getTableFromUri(aUri);
+        if (match != null) {
+            String where = aSelection;
+            String[] args = aSelectionArgs;
+            if (match.item) {
+                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
+                args = DatabaseUtils.appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
+            }
+
+            result = db.delete(match.table, where, args);
+
+            Context ctx = getContext();
+            assert ctx != null;
+            getContext().getContentResolver().notifyChange(aUri, null);
+        }
+
+        return result;
+    }
+
+    protected UriMatch getTableFromUri(Uri aUri) {
+        UriMatch match = new UriMatch();
+        int index = URI_MATCHER.match(aUri);
+        if (index == UriMatcher.NO_MATCH) {
+            index = URI_ID_MATCHER.match(aUri);
+            if (index != UriMatcher.NO_MATCH) {
+                match.item = true;
+            }
+        }
+        if (index >= 0) {
+            match.table = DatabaseHelper.TABLE_NAMES.get(index);
+        }
+        return match;
+    }
+
+    protected class UriMatch {
+        String table;
+        boolean item;
     }
 
 }

@@ -12,10 +12,6 @@ public abstract class AbstractDataModel {
         return DatabaseHelper.getContentUri(getClass());
     }
 
-    protected abstract SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder);
-
-    protected abstract SQLiteTable updateTableSchema(SQLiteTable.Builder aBuilder, int aOldVersion);
-
     public Uri save(Context aContext) {
         ContentValues values = new ContentValues();
         populateContentValues(values);
