@@ -19,6 +19,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     protected static final ArrayList<String>      TABLE_NAMES     = new ArrayList<String>();
     protected static final HashMap<Class, String> TABLE_MAP       = new HashMap<Class, String>();
     protected static final HashMap<Class, Uri>    CONTENT_URI_MAP = new HashMap<Class, Uri>();
+    protected static final ArrayList<Uri>         JOIN_URI_LIST   = new ArrayList<Uri>();
 
     public DatabaseHelper(Context aContext, String aName, int aVersion) {
         super(aContext, aName, null, aVersion);
@@ -57,6 +58,35 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static Uri getContentUri(Class<? extends AbstractDataModel> aTableName) {
         return CONTENT_URI_MAP.get(aTableName);
+    }
+
+    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1, Class<?> aTable2, String aColumn2) {
+        String auth = SimpleContentProvider.sContentAuthority;
+        if (auth == null) throw new IllegalStateException("Register tables with registerModel(..) methods first.");
+        String tblName1 = TABLE_MAP.get(aTable1);
+        if (tblName1 == null) throw new IllegalStateException("call registerModel() first for table " + aTable1);
+        String tblName2 = TABLE_MAP.get(aTable2);
+        if (tblName2 == null) throw new IllegalStateException("call registerModel() first for table " + aTable2);
+
+        String path = tblName1 + "_" + tblName2;
+        Uri contentUri = Uri.parse(String.format("content://%s/%s", auth, path));
+        int exists = SimpleContentProvider.URI_JOIN_MATCHER.match(contentUri);
+        if (exists >= 0) {
+            return JOIN_URI_LIST.get(exists);
+        }
+
+        int nextIndex = JOIN_URI_LIST.size();
+        JOIN_URI_LIST.add(contentUri);
+
+        // foo LEFT OUTER JOIN bar ON (foo.id = bar.foo_id)
+        String table = String.format("%s LEFT OUTER JOIN %s ON (%s.%s = %s.%s)",
+                                     tblName1, tblName2,
+                                     tblName1, aColumn1,
+                                     tblName2, aColumn2);
+
+        SimpleContentProvider.JOIN_TABLES.add(table);
+        SimpleContentProvider.URI_JOIN_MATCHER.addURI(auth, path, nextIndex);
+        return contentUri;
     }
 
     @Override

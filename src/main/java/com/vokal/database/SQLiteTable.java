@@ -302,7 +302,9 @@ public class SQLiteTable {
         }
 
         public Builder index(String... aColumns) {
-            String index_name = TextUtils.join("_", aColumns).toLowerCase().concat("_idx");
+            String index_name = mTable.mTableName.concat("_")
+                    .concat(TextUtils.join("_", aColumns).toLowerCase())
+                    .concat("_idx");
             String columns = TextUtils.join(", ", aColumns);
             mTable.addIndex(index_name, columns);
             return this;
@@ -382,7 +384,9 @@ public class SQLiteTable {
         }
 
         public Updater index(String... aColumns) {
-            String index_name = TextUtils.join("_", aColumns).toLowerCase().concat("_idx");
+            String index_name = mTable.mTableName.concat("_")
+                    .concat(TextUtils.join("_", aColumns).toLowerCase())
+                    .concat("_idx");
             String columns = TextUtils.join(", ", aColumns);
             mTable.addIndex(index_name, columns);
             return this;
