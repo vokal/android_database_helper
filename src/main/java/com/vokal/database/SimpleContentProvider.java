@@ -98,21 +98,18 @@ public class SimpleContentProvider extends ContentProvider {
         if (match != null) {
             builder.setTables(match.table);
 
-            String where = aSelection;
             String[] args = aSelectionArgs;
             if (match.item) {
-//                builder.appendWhere("_ID=" + aUri.getLastPathSegment());
-                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
+                builder.appendWhere(BaseColumns._ID + "=?");
                 args = DatabaseUtils.appendSelectionArgs(args, new String[]{aUri.getLastPathSegment()});
             }
+            result = builder.query(db, aProjection, aSelection, args, null, null, aSortOrder);
 
-            result = builder.query(db, aProjection, where, args, null, null, aSortOrder);
-
-            /*if (result != null) {
+            if (result != null) {
                 Context ctx = getContext();
                 assert ctx != null;
                 result.setNotificationUri(ctx.getContentResolver(), aUri);
-            }*/
+            }
         }
 
         return result;
