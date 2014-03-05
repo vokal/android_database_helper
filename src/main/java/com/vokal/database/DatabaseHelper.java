@@ -29,9 +29,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * registers a table with authority, uses lowercase class name as table name(s)
      */
     @SafeVarargs
-    public static void registerModel(Context aContext, Class<? extends AbstractDataModel>... aModelClass) {
+    public static void registerModel(Context aContext, Class<?>... aModelClass) {
         if (aModelClass != null) {
-            for (Class<? extends AbstractDataModel> clazz : aModelClass) {
+            for (Class<?> clazz : aModelClass) {
                 registerModel(aContext, clazz, clazz.getSimpleName().toLowerCase(Locale.getDefault()));
             }
         }
@@ -40,7 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     /*
      * registers a table with provider with authority using specified table name
      */
-    public static void registerModel(Context aContext, Class<? extends AbstractDataModel> aModelClass, String aTableName) {
+    public static void registerModel(Context aContext, Class<?> aModelClass, String aTableName) {
         if (!TABLE_MAP.values().contains(aTableName)) {
             int matcher_index = TABLE_NAMES.size();
 
@@ -56,7 +56,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    public static Uri getContentUri(Class<? extends AbstractDataModel> aTableName) {
+    public static Uri getContentUri(Class<?> aTableName) {
         return CONTENT_URI_MAP.get(aTableName);
     }
 
