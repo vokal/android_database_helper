@@ -200,10 +200,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
                 args = DatabaseUtils.appendSelectionArgs(args, new String[]{aUri.getLastPathSegment()});
             }
 
-            if (match.join) {
-                builder.appendWhere("bet.matchup = matchup._id");
-            }
-
             result = builder.query(db, aProjection, aSelection, args, null, null, aSortOrder);
 
             if (result != null) {

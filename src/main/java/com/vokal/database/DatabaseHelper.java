@@ -20,8 +20,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final ArrayList<String>      TABLE_NAMES     = new ArrayList<String>();
     protected static final HashMap<Class, String> TABLE_MAP       = new HashMap<Class, String>();
+    protected static final HashMap<String, Class> CLASS_MAP       = new HashMap<String, Class>();
     protected static final HashMap<Class, Uri>    CONTENT_URI_MAP = new HashMap<Class, Uri>();
     protected static final ArrayList<Uri>         JOIN_URI_LIST   = new ArrayList<Uri>();
+
+    private boolean isOpen;
 
     public DatabaseHelper(Context aContext, String aName, int aVersion) {
         super(aContext, aName, null, aVersion);
@@ -43,11 +46,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * registers a table with provider with authority using specified table name
      */
     public static void registerModel(Context aContext, Class<? extends AbstractDataModel> aModelClass, String aTableName) {
-        if (!TABLE_MAP.values().contains(aTableName)) {
+        if (!CLASS_MAP.containsKey(aTableName)) {
             int matcher_index = TABLE_NAMES.size();
 
             TABLE_NAMES.add(aTableName);
             TABLE_MAP.put(aModelClass, aTableName);
+            CLASS_MAP.put(aTableName, aModelClass);
 
             String authority = SimpleContentProvider.getContentAuthority(aContext);
             Uri contentUri = Uri.parse(String.format("content://%s/%s", authority, aTableName));
@@ -92,8 +96,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                      tblName1, tblName2,
                                      tblName1, aColumn1,
                                      tblName2, aColumn2);
-
-        table = tblName1 + ", " + tblName2;
 
         Timber.d("JOIN: '%s' -> '%s'", path, table);
 
@@ -165,6 +167,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        isOpen = true;
+    }
+
     SQLiteTable.TableCreator getTableCreator(Class aModelClass) {
         String className = aModelClass.getSimpleName();
         SQLiteTable.TableCreator creator = null;
@@ -186,4 +194,33 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return creator;
     }
+
+    List<String> getTableColumns(SQLiteDatabase aDatabase, String aTableName) {
+        List<String> columns = new ArrayList<String>();
+        if (isOpen) {
+            Cursor c = aDatabase.rawQuery(String.format("PRAGMA table_info(%s)", aTableName), null);
+            if (c.moveToFirst()) {
+                do {
+                    columns.add(c.getString(1));
+                } while (c.moveToNext());
+            }
+        } else {
+            Class tableClass = CLASS_MAP.get(aTableName);
+            if (tableClass != null) {
+                SQLiteTable.TableCreator creator = getTableCreator(tableClass);
+                SQLiteTable create = creator.buildTableSchema(new SQLiteTable.Builder(aTableName));
+                for (SQLiteTable.Column col : create.getColumns()) {
+                    columns.add(col.name);
+                }
+                SQLiteTable upgrade = creator.updateTableSchema(new SQLiteTable.Updater(aTableName),
+                                                                SimpleContentProvider.sDatabaseVersion);
+                for (SQLiteTable.Column col : upgrade.getColumns()) {
+                    columns.add(col.name);
+                }
+            }
+        }
+        return columns;
+    }
+
+
 }
