@@ -32,7 +32,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static void registerModel(Context aContext, Class<? extends AbstractDataModel>... aModelClass) {
         if (aModelClass != null) {
             for (Class<? extends AbstractDataModel> clazz : aModelClass) {
-                registerModel(aContext, clazz, clazz.getSimpleName().toLowerCase());
+                registerModel(aContext, clazz, clazz.getSimpleName().toLowerCase(Locale.getDefault()));
             }
         }
     }
