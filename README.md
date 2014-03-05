@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/vokalinteractive/android_database_helper.png?label=ready&title=Ready)](https://waffle.io/vokalinteractive/android_database_helper)
 #ADHD - Android Database Helper Dummy
 ---
 
