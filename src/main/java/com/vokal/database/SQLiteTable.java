@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
+import java.util.Locale;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -303,7 +304,7 @@ public class SQLiteTable {
 
         public Builder index(String... aColumns) {
             String index_name = mTable.mTableName.concat("_")
-                    .concat(TextUtils.join("_", aColumns).toLowerCase())
+                    .concat(TextUtils.join("_", aColumns).toLowerCase(Locale.getDefault()))
                     .concat("_idx");
             String columns = TextUtils.join(", ", aColumns);
             mTable.addIndex(index_name, columns);
@@ -385,7 +386,7 @@ public class SQLiteTable {
 
         public Updater index(String... aColumns) {
             String index_name = mTable.mTableName.concat("_")
-                    .concat(TextUtils.join("_", aColumns).toLowerCase())
+                    .concat(TextUtils.join("_", aColumns).toLowerCase(Locale.getDefault()))
                     .concat("_idx");
             String columns = TextUtils.join(", ", aColumns);
             mTable.addIndex(index_name, columns);
