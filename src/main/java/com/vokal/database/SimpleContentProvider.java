@@ -10,6 +10,9 @@ import android.provider.BaseColumns;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Map;
+
+import timber.log.Timber;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -28,7 +31,8 @@ public class SimpleContentProvider extends SQLiteContentProvider {
     static final UriMatcher URI_ID_MATCHER   = new UriMatcher(UriMatcher.NO_MATCH);
     static final UriMatcher URI_JOIN_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
-    static final ArrayList<String> JOIN_TABLES = new ArrayList<String>();
+    static final ArrayList<String>              JOIN_TABLES    = new ArrayList<String>();
+    static final ArrayList<Map<String, String>> JOIN_PROJ_MAPS = new ArrayList<Map<String, String>>();
 
     private static ProviderInfo sProviderInfo;
 
@@ -185,12 +189,21 @@ public class SimpleContentProvider extends SQLiteContentProvider {
         UriMatch match = getTableFromUri(aUri);
         if (match != null) {
             builder.setTables(match.table);
+            if (match.projection != null) {
+                builder.setProjectionMap(match.projection);
+                Timber.d("projection map: %s", match.projection);
+            }
 
             String[] args = aSelectionArgs;
             if (match.item) {
                 builder.appendWhere(BaseColumns._ID + "=?");
                 args = DatabaseUtils.appendSelectionArgs(args, new String[]{aUri.getLastPathSegment()});
             }
+
+            if (match.join) {
+                builder.appendWhere("bet.matchup = matchup._id");
+            }
+
             result = builder.query(db, aProjection, aSelection, args, null, null, aSortOrder);
 
             if (result != null) {
@@ -223,6 +236,8 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             if (index != UriMatcher.NO_MATCH) {
                 match.join = true;
                 match.table = JOIN_TABLES.get(index);
+                match.projection = JOIN_PROJ_MAPS.get(index);
+                // TODO: if projection is null here, we should build standard SQL table.column map
                 return match;
             }
         }
@@ -236,9 +251,10 @@ public class SimpleContentProvider extends SQLiteContentProvider {
     }
 
     protected class UriMatch {
-        String table;
-        boolean item;
-        boolean join;
+        String              table;
+        Map<String, String> projection;
+        boolean             item;
+        boolean             join;
     }
 
 }

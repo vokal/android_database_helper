@@ -14,6 +14,8 @@ import android.util.Log;
 import java.lang.reflect.*;
 import java.util.*;
 
+import timber.log.Timber;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     protected static final ArrayList<String>      TABLE_NAMES     = new ArrayList<String>();
@@ -60,7 +62,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return CONTENT_URI_MAP.get(aTableName);
     }
 
-    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1, Class<?> aTable2, String aColumn2) {
+    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1,
+                                          Class<?> aTable2, String aColumn2) {
+        return getJoinedContentUri(aTable1, aColumn1, aTable2, aColumn2, null);
+    }
+
+    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1,
+                                          Class<?> aTable2, String aColumn2,
+                                          Map<String, String> aProjMap) {
         String auth = SimpleContentProvider.sContentAuthority;
         if (auth == null) throw new IllegalStateException("Register tables with registerModel(..) methods first.");
         String tblName1 = TABLE_MAP.get(aTable1);
@@ -79,12 +88,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         JOIN_URI_LIST.add(contentUri);
 
         // foo LEFT OUTER JOIN bar ON (foo.id = bar.foo_id)
-        String table = String.format("%s LEFT OUTER JOIN %s ON (%s.%s = %s.%s)",
+        String table = String.format("%s JOIN %s ON (%s.%s = %s.%s)",
                                      tblName1, tblName2,
                                      tblName1, aColumn1,
                                      tblName2, aColumn2);
 
+        table = tblName1 + ", " + tblName2;
+
+        Timber.d("JOIN: '%s' -> '%s'", path, table);
+
         SimpleContentProvider.JOIN_TABLES.add(table);
+        SimpleContentProvider.JOIN_PROJ_MAPS.add(aProjMap);
         SimpleContentProvider.URI_JOIN_MATCHER.addURI(auth, path, nextIndex);
         return contentUri;
     }
