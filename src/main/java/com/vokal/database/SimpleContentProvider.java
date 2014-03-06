@@ -189,15 +189,12 @@ public class SimpleContentProvider extends SQLiteContentProvider {
         if (match != null) {
             builder.setTables(match.table);
 
-            String uriPath = aUri.toString();
-
             String[] args = aSelectionArgs;
             if (match.item) {
                 String id = aUri.getLastPathSegment();
                 if (id != null) {
                     builder.appendWhere(BaseColumns._ID + "=?");
                     args = DatabaseUtils.appendSelectionArgs(args, new String[]{id});
-                    uriPath = uriPath.substring(0, uriPath.length() - id.length());
                 }
             }
 
@@ -271,6 +268,7 @@ public class SimpleContentProvider extends SQLiteContentProvider {
         String column_2;
 
         Join(Uri aBaseUri, String aTable1, String aColumn1, String aTable2, String aColumn2) {
+            base_uri = aBaseUri;
             table_1 = aTable1;
             column_1 = aColumn1;
             table_2 = aTable2;
