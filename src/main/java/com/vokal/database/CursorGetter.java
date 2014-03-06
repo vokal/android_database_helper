@@ -20,12 +20,13 @@ public class CursorGetter {
         setTable(aTableName);
     }
 
-    public void setTable(String aTableName) {
+    public CursorGetter setTable(String aTableName) {
         if (isEmpty(aTableName)) {
             mTable = null;
         } else {
-            mTable = aTableName.concat(".");
+            mTable = aTableName.concat("_");
         }
+        return this;
     }
 
     public String getString(String aColumn) {
