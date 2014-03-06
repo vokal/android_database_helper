@@ -200,10 +200,10 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
             Map<String, String> projection = PROJECTION_MAPS.get(aUri);
             if (match.join && projection == null) {
-                Map<String, String> proj = DatabaseHelper.buildDefaultJoinMap(JOIN_DETAILS.get(match.index), db);
-                PROJECTION_MAPS.put(JOIN_DETAILS.get(match.index).base_uri, proj);
-                builder.setProjectionMap(proj);
+                projection = DatabaseHelper.buildDefaultJoinMap(JOIN_DETAILS.get(match.index), db);
+                PROJECTION_MAPS.put(JOIN_DETAILS.get(match.index).base_uri, projection);
             }
+            if (projection != null) builder.setProjectionMap(projection);
 
             if (BuildConfig.DEBUG) {
                 String sql = builder.buildQuery(aProjection, null, null, null, null, null);
