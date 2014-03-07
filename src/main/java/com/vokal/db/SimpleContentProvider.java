@@ -3,14 +3,13 @@ package com.vokal.db;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
-import android.database.*;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.*;
 import android.net.Uri;
 import android.provider.BaseColumns;
 
 import java.util.*;
-
-import timber.log.Timber;
 
 import static android.text.TextUtils.isEmpty;
 
@@ -203,12 +202,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
                 PROJECTION_MAPS.put(JOIN_DETAILS.get(match.index).base_uri, projection);
             }
             if (projection != null) builder.setProjectionMap(projection);
-
-            if (BuildConfig.DEBUG) {
-                String sql = builder.buildQuery(aProjection, null, null, null, null, null);
-                sql += " " + String.format(aSelection.replace("?", "%s"), args);
-                Timber.d("query: %s", sql);
-            }
 
             result = builder.query(db, aProjection, aSelection, args, null, null, aSortOrder);
 

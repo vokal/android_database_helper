@@ -5,13 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.text.TextUtils;
-import android.util.Log;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
-
-import timber.log.Timber;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -138,7 +134,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 tableNames.add(tables.getString(tables.getColumnIndex("name")));
             }
         }
-        Log.d("DatabaseHelper", "current tables: " + TextUtils.join(", ", tableNames));
 
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
             SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
@@ -199,7 +194,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     static List<String> getTableColumns(SQLiteDatabase aDatabase, String aTableName) {
         List<String> columns = new ArrayList<String>();
         if (isOpen && aDatabase != null) {
-            Timber.d("getting '%s' columns from database...", aTableName);
             Cursor c = aDatabase.rawQuery(String.format("PRAGMA table_info(%s)", aTableName), null);
             if (c.moveToFirst()) {
                 do {
@@ -207,7 +201,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 } while (c.moveToNext());
             }
         } else {
-            Timber.d("getting '%s' columns from creator/updater", aTableName);
             Class tableClass = CLASS_MAP.get(aTableName);
             if (tableClass != null) {
                 SQLiteTable.TableCreator creator = getTableCreator(tableClass);
@@ -242,8 +235,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             projection.put(String.format("%s_%s", aJoin.table_2, col),
                         String.format("%s.%s AS %s_%s", aJoin.table_2, col, aJoin.table_2, col));
         }
-
-        Timber.d("built default join projection map: %s", projection);
 
         return projection;
     }
