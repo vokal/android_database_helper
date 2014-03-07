@@ -1,4 +1,4 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -16,7 +16,7 @@ public class SQLiteTable {
         public SQLiteTable updateTableSchema(Updater aUpdater, int aOldVersion);
     }
 
-    static class Column {
+    public static class Column {
         public int     type;
         public String  name;
         public boolean primary_key;

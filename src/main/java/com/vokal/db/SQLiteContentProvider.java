@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
-package com.vokal.database;
+package com.vokal.db;
 
-import android.content.*;
-import android.database.sqlite.*;
 import android.net.Uri;
 
 import java.util.ArrayList;
@@ -30,9 +28,6 @@ import android.content.OperationApplicationException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteTransactionListener;
-import android.net.Uri;
-
-import java.util.ArrayList;
 
 /**
  * General purpose {@link android.content.ContentProvider} base class that uses SQLiteDatabase for storage.

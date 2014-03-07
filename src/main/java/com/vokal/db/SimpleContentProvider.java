@@ -1,21 +1,20 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
-import android.database.*;
+import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.*;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import android.util.Log;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import static android.text.TextUtils.isEmpty;
 
 public class SimpleContentProvider extends SQLiteContentProvider {
 
-    private static final String TAG  = SimpleContentProvider.class.getSimpleName();
     private static final String NAME = SimpleContentProvider.class.getCanonicalName();
 
     private static final String KEY_DB_NAME    = "database_name";
@@ -28,12 +27,14 @@ public class SimpleContentProvider extends SQLiteContentProvider {
     static final UriMatcher URI_ID_MATCHER   = new UriMatcher(UriMatcher.NO_MATCH);
     static final UriMatcher URI_JOIN_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
 
-    static final ArrayList<String> JOIN_TABLES = new ArrayList<String>();
+    static final ArrayList<String> JOIN_TABLES  = new ArrayList<String>();
+    static final ArrayList<Join>   JOIN_DETAILS = new ArrayList<Join>();
 
-    private static ProviderInfo sProviderInfo;
+    static final HashMap<Uri, Map<String, String>> PROJECTION_MAPS = new HashMap<Uri, Map<String, String>>();
 
-    static String sContentAuthority;
-    static String sDatabaseName;
+    static ProviderInfo sProviderInfo;
+    static String       sContentAuthority;
+    static String       sDatabaseName;
     static int sDatabaseVersion = 1;
 
     protected DatabaseHelper mHelper;
@@ -163,7 +164,7 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     @Override
     protected void notifyChange() {
-        // ???
+        // ???  notify what? uri isn't passed
     }
 
     @Override
@@ -188,9 +189,20 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
             String[] args = aSelectionArgs;
             if (match.item) {
-                builder.appendWhere(BaseColumns._ID + "=?");
-                args = DatabaseUtils.appendSelectionArgs(args, new String[]{aUri.getLastPathSegment()});
+                String id = aUri.getLastPathSegment();
+                if (id != null) {
+                    builder.appendWhere(BaseColumns._ID + "=?");
+                    args = DatabaseUtils.appendSelectionArgs(args, new String[]{id});
+                }
             }
+
+            Map<String, String> projection = PROJECTION_MAPS.get(aUri);
+            if (match.join && projection == null) {
+                projection = DatabaseHelper.buildDefaultJoinMap(JOIN_DETAILS.get(match.index), db);
+                PROJECTION_MAPS.put(JOIN_DETAILS.get(match.index).base_uri, projection);
+            }
+            if (projection != null) builder.setProjectionMap(projection);
+
             result = builder.query(db, aProjection, aSelection, args, null, null, aSortOrder);
 
             if (result != null) {
@@ -207,28 +219,26 @@ public class SimpleContentProvider extends SQLiteContentProvider {
         UriMatch match = new UriMatch();
 
         // check for table match
-        int index = URI_MATCHER.match(aUri);
+        match.index = URI_MATCHER.match(aUri);
 
         // check for item match
-        if (index == UriMatcher.NO_MATCH) {
-            index = URI_ID_MATCHER.match(aUri);
-            if (index != UriMatcher.NO_MATCH) {
+        if (match.index == UriMatcher.NO_MATCH) {
+            match.index = URI_ID_MATCHER.match(aUri);
+            if (match.index != UriMatcher.NO_MATCH) {
                 match.item = true;
             }
         }
 
-        // check for join match
-        if (index == UriMatcher.NO_MATCH) {
-            index = URI_JOIN_MATCHER.match(aUri);
-            if (index != UriMatcher.NO_MATCH) {
-                match.join = true;
-                match.table = JOIN_TABLES.get(index);
-                return match;
-            }
+        if (match.index != UriMatcher.NO_MATCH) {
+            match.table = DatabaseHelper.TABLE_NAMES.get(match.index);
+            return match;
         }
 
-        if (index >= 0) {
-            match.table = DatabaseHelper.TABLE_NAMES.get(index);
+        // check for join match
+        match.index = URI_JOIN_MATCHER.match(aUri);
+        if (match.index != UriMatcher.NO_MATCH) {
+            match.table = JOIN_TABLES.get(match.index);
+            match.join = true;
             return match;
         }
 
@@ -236,9 +246,25 @@ public class SimpleContentProvider extends SQLiteContentProvider {
     }
 
     protected class UriMatch {
-        String table;
+        int     index;
+        String  table;
         boolean item;
         boolean join;
     }
 
+    static class Join {
+        Uri base_uri;
+        String table_1;
+        String column_1;
+        String table_2;
+        String column_2;
+
+        Join(Uri aBaseUri, String aTable1, String aColumn1, String aTable2, String aColumn2) {
+            base_uri = aBaseUri;
+            table_1 = aTable1;
+            column_1 = aColumn1;
+            table_2 = aTable2;
+            column_2 = aColumn2;
+        }
+    }
 }

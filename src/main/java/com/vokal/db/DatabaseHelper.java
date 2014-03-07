@@ -1,25 +1,22 @@
-package com.vokal.database;
+package com.vokal.db;
 
-import android.content.ContentValues;
-import android.content.Context;
+import android.content.*;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
-import android.os.BadParcelableException;
-import android.text.TextUtils;
-import android.util.Log;
 
-import java.lang.reflect.*;
+import java.lang.reflect.Field;
 import java.util.*;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
-    protected static final ArrayList<String>      TABLE_NAMES     = new ArrayList<String>();
-    protected static final HashMap<Class, String> TABLE_MAP       = new HashMap<Class, String>();
-    protected static final HashMap<Class, Uri>    CONTENT_URI_MAP = new HashMap<Class, Uri>();
-    protected static final ArrayList<Uri>         JOIN_URI_LIST   = new ArrayList<Uri>();
+    protected static final ArrayList<String>                 TABLE_NAMES     = new ArrayList<String>();
+    protected static final HashMap<Class, String>            TABLE_MAP       = new HashMap<Class, String>();
+    protected static final HashMap<String, Class>            CLASS_MAP       = new HashMap<String, Class>();
+    protected static final HashMap<Class, Uri>               CONTENT_URI_MAP = new HashMap<Class, Uri>();
+
+    private static boolean isOpen;
 
     public DatabaseHelper(Context aContext, String aName, int aVersion) {
         super(aContext, aName, null, aVersion);
@@ -41,11 +38,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
      * registers a table with provider with authority using specified table name
      */
     public static void registerModel(Context aContext, Class<?> aModelClass, String aTableName) {
-        if (!TABLE_MAP.values().contains(aTableName)) {
+        if (!TABLE_NAMES.contains(aTableName)) {
             int matcher_index = TABLE_NAMES.size();
 
             TABLE_NAMES.add(aTableName);
             TABLE_MAP.put(aModelClass, aTableName);
+            CLASS_MAP.put(aTableName, aModelClass);
 
             String authority = SimpleContentProvider.getContentAuthority(aContext);
             Uri contentUri = Uri.parse(String.format("content://%s/%s", authority, aTableName));
@@ -60,7 +58,14 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return CONTENT_URI_MAP.get(aTableName);
     }
 
-    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1, Class<?> aTable2, String aColumn2) {
+    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1,
+                                          Class<?> aTable2, String aColumn2) {
+        return getJoinedContentUri(aTable1, aColumn1, aTable2, aColumn2, null);
+    }
+
+    public static Uri getJoinedContentUri(Class<?> aTable1, String aColumn1,
+                                          Class<?> aTable2, String aColumn2,
+                                          Map<String, String> aProjMap) {
         String auth = SimpleContentProvider.sContentAuthority;
         if (auth == null) throw new IllegalStateException("Register tables with registerModel(..) methods first.");
         String tblName1 = TABLE_MAP.get(aTable1);
@@ -71,22 +76,30 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         String path = tblName1 + "_" + tblName2;
         Uri contentUri = Uri.parse(String.format("content://%s/%s", auth, path));
         int exists = SimpleContentProvider.URI_JOIN_MATCHER.match(contentUri);
-        if (exists >= 0) {
-            return JOIN_URI_LIST.get(exists);
+        if (exists != UriMatcher.NO_MATCH) {
+            return contentUri;
         }
 
-        int nextIndex = JOIN_URI_LIST.size();
-        JOIN_URI_LIST.add(contentUri);
-
-        // foo LEFT OUTER JOIN bar ON (foo.id = bar.foo_id)
         String table = String.format("%s LEFT OUTER JOIN %s ON (%s.%s = %s.%s)",
                                      tblName1, tblName2,
                                      tblName1, aColumn1,
                                      tblName2, aColumn2);
 
+        int nextIndex = SimpleContentProvider.JOIN_TABLES.size();
         SimpleContentProvider.JOIN_TABLES.add(table);
         SimpleContentProvider.URI_JOIN_MATCHER.addURI(auth, path, nextIndex);
+
+        SimpleContentProvider.PROJECTION_MAPS.put(contentUri, aProjMap);
+        SimpleContentProvider.JOIN_DETAILS.add(new SimpleContentProvider.Join(contentUri,
+                                                                              tblName1, aColumn1,
+                                                                              tblName2, aColumn2));
+
         return contentUri;
+    }
+
+
+    public static void setProjectionMap(Uri aContentUri, Map<String, String> aProjectionMap) {
+        SimpleContentProvider.PROJECTION_MAPS.put(aContentUri, aProjectionMap);
     }
 
     @Override
@@ -121,7 +134,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 tableNames.add(tables.getString(tables.getColumnIndex("name")));
             }
         }
-        Log.d("DatabaseHelper", "current tables: " + TextUtils.join(", ", tableNames));
 
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
             SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
@@ -151,7 +163,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
     }
 
-    SQLiteTable.TableCreator getTableCreator(Class aModelClass) {
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        isOpen = true;
+    }
+
+    static SQLiteTable.TableCreator getTableCreator(Class aModelClass) {
         String className = aModelClass.getSimpleName();
         SQLiteTable.TableCreator creator = null;
         try {
@@ -172,4 +190,53 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         }
         return creator;
     }
+
+    static List<String> getTableColumns(SQLiteDatabase aDatabase, String aTableName) {
+        List<String> columns = new ArrayList<String>();
+        if (isOpen && aDatabase != null) {
+            Cursor c = aDatabase.rawQuery(String.format("PRAGMA table_info(%s)", aTableName), null);
+            if (c.moveToFirst()) {
+                do {
+                    columns.add(c.getString(1));
+                } while (c.moveToNext());
+            }
+        } else {
+            Class tableClass = CLASS_MAP.get(aTableName);
+            if (tableClass != null) {
+                SQLiteTable.TableCreator creator = getTableCreator(tableClass);
+                SQLiteTable create = creator.buildTableSchema(new SQLiteTable.Builder(aTableName));
+                for (SQLiteTable.Column col : create.getColumns()) {
+                    columns.add(col.name);
+                }
+                SQLiteTable upgrade = creator.updateTableSchema(new SQLiteTable.Updater(aTableName),
+                                                                SimpleContentProvider.sDatabaseVersion);
+                for (SQLiteTable.Column col : upgrade.getColumns()) {
+                    columns.add(col.name);
+                }
+            }
+        }
+        return columns;
+    }
+
+    static Map<String,String> buildDefaultJoinMap(SimpleContentProvider.Join aJoin, SQLiteDatabase aDb) {
+        Map<String, String> projection = new HashMap<String, String>();
+
+        List<String> columns1 = getTableColumns(aDb, aJoin.table_1);
+        List<String> columns2 = getTableColumns(aDb, aJoin.table_2);
+
+        projection.put("_id", aJoin.table_1.concat("._id as _id"));
+
+        for (String col : columns1) {
+            projection.put(String.format("%s_%s", aJoin.table_1, col),
+                           String.format("%s.%s AS %s_%s", aJoin.table_1, col, aJoin.table_1, col));
+
+        }
+        for (String col : columns2) {
+            projection.put(String.format("%s_%s", aJoin.table_2, col),
+                        String.format("%s.%s AS %s_%s", aJoin.table_2, col, aJoin.table_2, col));
+        }
+
+        return projection;
+    }
+
 }

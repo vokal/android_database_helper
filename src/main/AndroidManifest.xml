@@ -1,6 +1,6 @@
 <manifest
         xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.vokal.database">
+        package="com.vokal.db">
 
     <application android:allowBackup="true" />
 
