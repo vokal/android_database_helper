@@ -1,4 +1,4 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.annotation.TargetApi;
 import android.database.Cursor;

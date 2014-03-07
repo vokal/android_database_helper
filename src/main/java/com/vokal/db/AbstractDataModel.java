@@ -1,17 +1,14 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
 import android.net.Uri;
 
 import java.util.List;
-
-import timber.log.Timber;
 
 public abstract class AbstractDataModel implements BaseColumns, Parcelable {
 
@@ -63,11 +60,9 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
         if (hasId()) {
             uri = ContentUris.withAppendedId(getContentUri(), _id);
             updated = aContext.getContentResolver().update(uri, values, null, null);
-            Timber.d("UPDATED: %s", uri);
         }
         if (updated == 0 || !hasId()) {
             uri = aContext.getContentResolver().insert(getContentUri(), values);
-            Timber.d("INSERTED: %s", uri);
             try {
                 _id = ContentUris.parseId(uri);
             } catch (Exception e) {

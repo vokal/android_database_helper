@@ -1,4 +1,4 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.content.*;
 import android.content.pm.PackageManager;
@@ -6,7 +6,6 @@ import android.content.pm.ProviderInfo;
 import android.database.*;
 import android.database.sqlite.*;
 import android.net.Uri;
-import android.os.Build;
 import android.provider.BaseColumns;
 
 import java.util.*;
@@ -166,7 +165,7 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     @Override
     protected void notifyChange() {
-        // ???
+        // ???  notify what? uri isn't passed
     }
 
     @Override

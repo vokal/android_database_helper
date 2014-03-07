@@ -1,4 +1,4 @@
-package com.vokal.database;
+package com.vokal.db;
 
 import android.content.*;
 import android.database.Cursor;
@@ -88,8 +88,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                                      tblName1, tblName2,
                                      tblName1, aColumn1,
                                      tblName2, aColumn2);
-
-        Timber.d("JOIN: '%s' -> '%s'", path, table);
 
         int nextIndex = SimpleContentProvider.JOIN_TABLES.size();
         SimpleContentProvider.JOIN_TABLES.add(table);
