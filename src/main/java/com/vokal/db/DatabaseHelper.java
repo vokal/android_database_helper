@@ -109,15 +109,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             if (creator != null) {
                 SQLiteTable.Builder builder = new SQLiteTable.Builder(entry.getValue());
                 SQLiteTable table = creator.buildTableSchema(builder);
-                db.execSQL(table.getCreateSQL());
-                if (table.getIndicesSQL() != null) {
-                    for (String indexSQL : table.getIndicesSQL()) {
-                        db.execSQL(indexSQL);
+                if (table != null) {
+                    db.execSQL(table.getCreateSQL());
+                    if (table.getIndicesSQL() != null) {
+                        for (String indexSQL : table.getIndicesSQL()) {
+                            db.execSQL(indexSQL);
+                        }
                     }
-                }
-                if (table.getSeedValues() != null) {
-                    for (ContentValues values : table.getSeedValues()) {
-                        db.insert(table.getTableName(), table.getNullHack(), values);
+                    if (table.getSeedValues() != null) {
+                        for (ContentValues values : table.getSeedValues()) {
+                            db.insert(table.getTableName(), table.getNullHack(), values);
+                        }
                     }
                 }
             }
@@ -137,18 +139,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
             SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
-            if (creator != null) {
-                SQLiteTable.Builder builder = new SQLiteTable.Builder(entry.getValue());
-                SQLiteTable table = creator.buildTableSchema(builder);
+            if (creator == null) continue;
 
-                if (!tableNames.contains(table.getTableName())) {
+            SQLiteTable table = null;
+            String tableName = entry.getValue();
+            if (!tableNames.contains(tableName)) {
+                SQLiteTable.Builder builder = new SQLiteTable.Builder(tableName);
+                table = creator.buildTableSchema(builder);
+                if (table != null) {
                     db.execSQL(table.getCreateSQL());
-                } else {
+                }
+            } else {
+                SQLiteTable.Updater updater = new SQLiteTable.Updater(tableName);
+                table = creator.updateTableSchema(updater, oldVersion);
+                if (table != null) {
                     String[] updates = table.getUpdateSQL();
                     for (String updateSQL : updates) {
                         db.execSQL(updateSQL);
                     }
                 }
+            }
+
+            if (table != null) {
                 if (table.getIndicesSQL() != null) {
                     for (String indexSQL : table.getIndicesSQL()) {
                         db.execSQL(indexSQL);
@@ -160,6 +172,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     }
                 }
             }
+
         }
     }
 
