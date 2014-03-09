@@ -25,6 +25,19 @@ public class SQLiteTable {
         public boolean not_null;
         public boolean unique;
         public String  default_value;
+
+        Column(String aName, int aType) {
+            name = aName;
+            type = aType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o == null || !(o instanceof Column)) return false;
+
+            Column other = (Column) o;
+            return other.name.equals(name);
+        }
     }
 
     private String            mTableName;
@@ -57,10 +70,9 @@ public class SQLiteTable {
     }
 
     public Column addColumn(int aType, String aName) {
-        Column column = new Column();
-        column.type = aType;
-        column.name = aName;
-        mColumns.add(column);
+        Column column = new Column(aName, aType);
+        if (!mColumns.contains(column))
+            mColumns.add(column);
         return column;
     }
 
