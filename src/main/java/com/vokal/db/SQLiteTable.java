@@ -2,6 +2,7 @@ package com.vokal.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.provider.BaseColumns;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
@@ -82,9 +83,9 @@ public class SQLiteTable {
                 if (col.primary_key) {
                     if (primaryKeyDefined)
                         throw new IllegalStateException("Table '" + mTableName + "' can only have one PRIMARY KEY");
+                    primaryKeyDefined = true;
 
                     colDef = colDef.concat(" PRIMARY KEY");
-                    primaryKeyDefined = true;
                     if (col.autoincrement) {
                         colDef = colDef.concat(" AUTOINCREMENT");
                     }
@@ -116,6 +117,7 @@ public class SQLiteTable {
             if (mPrimaryKey != null) {
                 if (primaryKeyDefined)
                     throw new IllegalStateException("table '" + mTableName + "' can only have one PRIMARY KEY");
+                primaryKeyDefined = true;
 
                 columnDefs.add(String.format("PRIMARY KEY (%s)", TextUtils.join(", ", mPrimaryKey)));
             }
@@ -192,6 +194,8 @@ public class SQLiteTable {
 
         private final SQLiteTable mTable;
         private Column mLastColumn;
+        private boolean androidIdDefined;
+        private boolean primaryKeyDefined;
 
         public Builder(String aTableName) {
             mTable = new SQLiteTable(aTableName);
@@ -204,6 +208,8 @@ public class SQLiteTable {
         }
 
         public Builder addIntegerColumn(String name) {
+            if (BaseColumns._ID.equals(name))
+                androidIdDefined = true;
             return column(name, Cursor.FIELD_TYPE_INTEGER);
         }
 
@@ -227,6 +233,10 @@ public class SQLiteTable {
         //--- Column Constraints
 
         public Builder primaryKey() {
+            if (primaryKeyDefined)
+                throw new IllegalStateException("Table '" + mTable.mTableName + "' can only have one PRIMARY KEY");
+            primaryKeyDefined = true;
+
             mLastColumn.primary_key = true;
             return this;
         }
@@ -283,6 +293,10 @@ public class SQLiteTable {
         //--- Table Constraints
 
         public Builder primaryKey(String... aColumns) {
+            if (primaryKeyDefined)
+                throw new IllegalStateException("Table '" + mTable.mTableName + "' can only have one PRIMARY KEY");
+            primaryKeyDefined = true;
+
             mTable.mPrimaryKey = aColumns;
             return this;
         }
@@ -312,6 +326,15 @@ public class SQLiteTable {
         }
 
         public SQLiteTable build() {
+            if (!androidIdDefined && isTableAbstractDataModel(mTable.mTableName)) {
+                Column col = new Column(BaseColumns._ID, Cursor.FIELD_TYPE_INTEGER);
+                col.autoincrement = true;
+                if (!primaryKeyDefined) {
+                    col.primary_key = true;
+                }
+                mTable.mColumns.add(col);
+            }
+
             return mTable;
         }
     }
@@ -396,6 +419,11 @@ public class SQLiteTable {
         public SQLiteTable build() {
             return mTable;
         }
+    }
+
+    private static boolean isTableAbstractDataModel(String aTableName) {
+        Class clazz = DatabaseHelper.CLASS_MAP.get(aTableName);
+        return clazz != null && AbstractDataModel.class.isAssignableFrom(clazz);
     }
 
 }
