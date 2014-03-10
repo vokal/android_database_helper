@@ -106,7 +106,7 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(_id);
+        dest.writeLong(_id == null ? UNDEFINED : _id);
     }
 
     @Override
