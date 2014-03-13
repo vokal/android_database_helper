@@ -27,18 +27,6 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
         _id = aGetter.getLong(_ID);
     }
 
-    public long getId() {
-        return _id;
-    }
-
-    public String getIdString() {
-        return Long.toString(_id);
-    }
-
-    public String[] getIdStringArray() {
-        return new String[]{Long.toString(_id)};
-    }
-
     public final Uri getContentUri() {
         return DatabaseHelper.getContentUri(getClass());
     }
