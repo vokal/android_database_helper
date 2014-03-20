@@ -24,7 +24,8 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
     }
 
     protected AbstractDataModel(CursorGetter aGetter) {
-        _id = aGetter.getLong(_ID);
+        if (!aGetter.isNull(_ID))
+            _id = aGetter.getLong(_ID);
     }
 
     public final Uri getContentUri() {
