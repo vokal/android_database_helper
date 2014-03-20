@@ -24,19 +24,8 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
     }
 
     protected AbstractDataModel(CursorGetter aGetter) {
-        _id = aGetter.getLong(_ID);
-    }
-
-    public long getId() {
-        return _id;
-    }
-
-    public String getIdString() {
-        return Long.toString(_id);
-    }
-
-    public String[] getIdStringArray() {
-        return new String[]{Long.toString(_id)};
+        if (!aGetter.isNull(_ID))
+            _id = aGetter.getLong(_ID);
     }
 
     public final Uri getContentUri() {
@@ -106,7 +95,7 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeLong(_id);
+        dest.writeLong(_id == null ? UNDEFINED : _id);
     }
 
     @Override

@@ -57,6 +57,10 @@ public class CursorGetter {
         return mCursor.getBlob(getColumnIndex(aColumn));
     }
 
+    public boolean isNull(String aColumn) {
+        return mCursor.isNull(getColumnIndex(aColumn));
+    }
+
     private int getColumnIndex(String aColumn) {
         if (mTable != null) {
             return mCursor.getColumnIndex(mTable.concat(aColumn));
