@@ -16,7 +16,7 @@ public class TestModel extends AbstractDataModel {
         public SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder) {
 
             aBuilder.addStringColumn(COL_STRING)
-                    .addIntegerColumn(COL_ID).primaryKey().unique().autoincrement()
+                    .addIntegerColumn(COL_ID).unique().autoincrement()
                     .addIntegerColumn(COL_BOOLEAN)
                     .addIntegerColumn(COL_LONG)
                     .addIntegerColumn(COL_INT)
