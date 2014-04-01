@@ -2,6 +2,6 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.vokal.db">
 
-    <application android:allowBackup="true" />
-
+    <application android:allowBackup="true">
+    </application>
 </manifest>
