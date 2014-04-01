@@ -16,10 +16,9 @@ public class TestModel extends AbstractDataModel {
         public SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder) {
 
             aBuilder.addStringColumn(COL_STRING)
-                    .addIntegerColumn(COL_ID).unique().autoincrement()
                     .addIntegerColumn(COL_BOOLEAN)
                     .addIntegerColumn(COL_LONG)
-                    .addIntegerColumn(COL_INT)
+                    .addIntegerColumn(COL_INT).unique().autoincrement()
                     .addIntegerColumn(COL_DOUBLE);
 
             return aBuilder.build();
@@ -36,21 +35,19 @@ public class TestModel extends AbstractDataModel {
     public static final String COL_INT = "int1";
     public static final String COL_LONG = "long1";
     public static final String COL_DOUBLE = "double1";
-    public static final String COL_ID = "id";
 
     private String string1;
     private boolean boolean1;
     private int int1;
     private long long1;
     private double double1;
-    private int id;
 
-    public int getId() {
-        return id;
+    public long getId() {
+        return _id;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setId(long id) {
+        this._id = id;
     }
 
     public String getString1() {
