@@ -29,6 +29,10 @@ public class CursorGetter {
         return this;
     }
 
+    public boolean hasColumn(String aColumn) {
+        return getColumnIndex(aColumn) != -1;
+    }
+
     public String getString(String aColumn) {
         return mCursor.getString(getColumnIndex(aColumn));
     }
