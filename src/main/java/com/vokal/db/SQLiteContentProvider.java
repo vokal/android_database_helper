@@ -17,7 +17,7 @@ package com.vokal.db;
 
 import android.net.Uri;
 
-import java.util.ArrayList;
+import java.util.*;
 
 import android.content.ContentProvider;
 import android.content.ContentProviderOperation;
@@ -38,7 +38,11 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
 
     private          SQLiteOpenHelper mOpenHelper;
     private volatile boolean          mNotifyChange;
-    protected        SQLiteDatabase   mDb;
+
+    protected final Object   mNotifyLock = new Object();
+    protected final Set<Uri> mNotifyUris = new HashSet<Uri>();
+
+    protected SQLiteDatabase mDb;
 
     private final        ThreadLocal<Boolean> mApplyingBatch          = new ThreadLocal<Boolean>();
     private static final int                  SLEEP_AFTER_YIELD_DELAY = 4000;
@@ -101,6 +105,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 result = insertInTransaction(uri, values);
                 if (result != null) {
                     mNotifyChange = true;
+                    synchronized (mNotifyLock) {
+                        mNotifyUris.add(uri);
+                    }
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -112,6 +119,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             result = insertInTransaction(uri, values);
             if (result != null) {
                 mNotifyChange = true;
+                synchronized (mNotifyLock) {
+                    mNotifyUris.add(uri);
+                }
             }
         }
         return result;
@@ -127,6 +137,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 Uri result = insertInTransaction(uri, values[i]);
                 if (result != null) {
                     mNotifyChange = true;
+                    synchronized (mNotifyLock) {
+                        mNotifyUris.add(uri);
+                    }
                 }
                 boolean savedNotifyChange = mNotifyChange;
                 SQLiteDatabase savedDb = mDb;
@@ -154,6 +167,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = updateInTransaction(uri, values, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
+                    synchronized (mNotifyLock) {
+                        mNotifyUris.add(uri);
+                    }
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -165,6 +181,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = updateInTransaction(uri, values, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
+                synchronized (mNotifyLock) {
+                    mNotifyUris.add(uri);
+                }
             }
         }
 
@@ -182,6 +201,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = deleteInTransaction(uri, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
+                    synchronized (mNotifyLock) {
+                        mNotifyUris.add(uri);
+                    }
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -193,6 +215,9 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = deleteInTransaction(uri, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
+                synchronized (mNotifyLock) {
+                    mNotifyUris.add(uri);
+                }
             }
         }
         return count;
