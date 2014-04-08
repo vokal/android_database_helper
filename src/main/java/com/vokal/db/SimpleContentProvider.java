@@ -53,13 +53,15 @@ public class SimpleContentProvider extends SQLiteContentProvider {
                 e.printStackTrace();
             } catch (PackageManager.NameNotFoundException e) {
                 e.printStackTrace();
+            } catch (UnsupportedOperationException e) {
+                e.printStackTrace();
             }
         }
         return sContentAuthority;
     }
 
     private static void getProviderInfo(Context aContext)
-            throws ClassNotFoundException, PackageManager.NameNotFoundException {
+            throws ClassNotFoundException, PackageManager.NameNotFoundException, UnsupportedOperationException{
         if (sProviderInfo == null) {
             Class<?> clazz = Class.forName(NAME);
             ComponentName component = new ComponentName(aContext, clazz);
