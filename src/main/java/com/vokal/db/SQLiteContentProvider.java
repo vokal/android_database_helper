@@ -39,8 +39,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
     private          SQLiteOpenHelper mOpenHelper;
     private volatile boolean          mNotifyChange;
 
-    protected final Object   mNotifyLock = new Object();
-    protected final Set<Uri> mNotifyUris = new HashSet<Uri>();
+    protected final Set<Uri> mNotifyUris = Collections.synchronizedSet(new HashSet<Uri>());
 
     protected SQLiteDatabase mDb;
 
@@ -105,9 +104,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 result = insertInTransaction(uri, values);
                 if (result != null) {
                     mNotifyChange = true;
-                    synchronized (mNotifyLock) {
-                        mNotifyUris.add(uri);
-                    }
+                    mNotifyUris.add(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -119,9 +116,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             result = insertInTransaction(uri, values);
             if (result != null) {
                 mNotifyChange = true;
-                synchronized (mNotifyLock) {
-                    mNotifyUris.add(uri);
-                }
+                mNotifyUris.add(uri);
             }
         }
         return result;
@@ -137,9 +132,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 Uri result = insertInTransaction(uri, values[i]);
                 if (result != null) {
                     mNotifyChange = true;
-                    synchronized (mNotifyLock) {
-                        mNotifyUris.add(uri);
-                    }
+                    mNotifyUris.add(uri);
                 }
                 boolean savedNotifyChange = mNotifyChange;
                 SQLiteDatabase savedDb = mDb;
@@ -167,9 +160,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = updateInTransaction(uri, values, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
-                    synchronized (mNotifyLock) {
-                        mNotifyUris.add(uri);
-                    }
+                    mNotifyUris.add(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -181,9 +172,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = updateInTransaction(uri, values, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
-                synchronized (mNotifyLock) {
-                    mNotifyUris.add(uri);
-                }
+                mNotifyUris.add(uri);
             }
         }
 
@@ -201,9 +190,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = deleteInTransaction(uri, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
-                    synchronized (mNotifyLock) {
-                        mNotifyUris.add(uri);
-                    }
+                    mNotifyUris.add(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -215,9 +202,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = deleteInTransaction(uri, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
-                synchronized (mNotifyLock) {
-                    mNotifyUris.add(uri);
-                }
+                mNotifyUris.add(uri);
             }
         }
         return count;

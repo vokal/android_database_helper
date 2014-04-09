@@ -152,14 +152,10 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     @Override
     protected void notifyChange() {
-        List<Uri> uriList = new ArrayList<Uri>();
-        synchronized (mNotifyLock) {
-            for (Uri uri : mNotifyUris) {
-                uriList.add(uri);
-            }
-            mNotifyUris.clear();
-        }
-        for (Uri uri : uriList) {
+        Uri[] uris = new Uri[mNotifyUris.size()];
+        mNotifyUris.toArray(uris);
+        mNotifyUris.clear();
+        for (Uri uri : uris) {
             getContext().getContentResolver().notifyChange(uri, null);
         }
     }
