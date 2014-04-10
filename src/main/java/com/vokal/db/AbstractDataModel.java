@@ -74,7 +74,7 @@ public abstract class AbstractDataModel implements BaseColumns, Parcelable {
         if (hasId()) aValues.put(_ID, _id);
     }
 
-    public static int bulkInsert(Context aContext, List<AbstractDataModel> aModelList) {
+    public static int bulkInsert(Context aContext, List<? extends AbstractDataModel> aModelList) {
         ContentValues[] values = new ContentValues[aModelList.size()];
         int index = 0;
         Uri uri = null;

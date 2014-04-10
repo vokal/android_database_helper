@@ -104,10 +104,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             long id = mDb.insertWithOnConflict(match.table, "", aValues, getConflictRule(match.table));
 
             if (id > -1) {
-                Context ctx = getContext();
-                assert ctx != null;
-                ctx.getContentResolver().notifyChange(aUri, null);
-
                 result = ContentUris.withAppendedId(aUri, id);
             }
         }
@@ -130,12 +126,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             }
 
             result = mDb.update(match.table, aValues, where, args);
-
-            if (result > 0) {
-                Context ctx = getContext();
-                assert ctx != null;
-                ctx.getContentResolver().notifyChange(aUri, null);
-            }
         }
         return result;
     }
@@ -155,10 +145,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             }
 
             result = mDb.delete(match.table, where, args);
-
-            Context ctx = getContext();
-            assert ctx != null;
-            getContext().getContentResolver().notifyChange(aUri, null);
         }
 
         return result;
@@ -166,7 +152,12 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     @Override
     protected void notifyChange() {
-        // ???  notify what? uri isn't passed
+        Uri[] uris = new Uri[mNotifyUris.size()];
+        mNotifyUris.toArray(uris);
+        mNotifyUris.clear();
+        for (Uri uri : uris) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
     }
 
     @Override
