@@ -252,4 +252,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return projection;
     }
 
+    public static void wipeDatabase(Context aContext) {
+        for (Uri uri : CONTENT_URI_MAP.values()) {
+            aContext.getContentResolver().delete(uri, null, null);
+        }
+    }
+
 }
