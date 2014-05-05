@@ -153,9 +153,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 SQLiteTable.Updater updater = new SQLiteTable.Updater(tableName);
                 table = creator.updateTableSchema(updater, oldVersion);
                 if (table != null) {
-                    String[] updates = table.getUpdateSQL();
-                    for (String updateSQL : updates) {
-                        db.execSQL(updateSQL);
+                    if (table.isCleanUpgrade()) {
+                        SQLiteTable.Builder builder = new SQLiteTable.Builder(tableName);
+                        table = creator.buildTableSchema(builder);
+                        if (table != null) {
+                            db.execSQL("DROP TABLE IF EXISTS " + tableName);
+                            db.execSQL(table.getCreateSQL());
+                        }
+                    } else {
+                        String[] updates = table.getUpdateSQL();
+                        for (String updateSQL : updates) {
+                            db.execSQL(updateSQL);
+                        }
                     }
                 }
             }
