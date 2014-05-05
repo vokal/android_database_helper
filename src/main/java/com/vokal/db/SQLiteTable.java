@@ -50,6 +50,8 @@ public class SQLiteTable {
     private String[]          mUpdateSQL;
     private String            mNullHack;
 
+    private boolean           mRecreateOnUpgrade;
+
     public SQLiteTable(String aTableName) {
         mTableName = aTableName;
         mColumns = new ArrayList<Column>();
@@ -200,6 +202,10 @@ public class SQLiteTable {
             case Cursor.FIELD_TYPE_BLOB: type = "BLOB"; break;
         }
         return column.name.concat(" ").concat(type);
+    }
+
+    protected boolean isCleanUpgrade() {
+        return mRecreateOnUpgrade;
     }
 
     public static class Builder {
@@ -429,6 +435,11 @@ public class SQLiteTable {
         }
 
         public SQLiteTable build() {
+            return mTable;
+        }
+
+        public SQLiteTable recreate() {
+            mTable.mRecreateOnUpgrade = true;
             return mTable;
         }
     }
