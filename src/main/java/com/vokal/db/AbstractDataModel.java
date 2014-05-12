@@ -10,6 +10,8 @@ import android.net.Uri;
 
 import java.util.List;
 
+import com.vokal.db.util.CursorGetter;
+
 public abstract class AbstractDataModel implements BaseColumns, Parcelable {
 
     public static final long   UNDEFINED    = -1;

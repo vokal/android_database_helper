@@ -1,15 +1,12 @@
 package com.vokal.db.test;
 
-import android.app.Instrumentation;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.test.AndroidTestCase;
-import android.test.InstrumentationTestCase;
 import android.test.ProviderTestCase2;
 
 import com.vokal.db.AbstractDataModel;
-import com.vokal.db.CursorGetter;
+import com.vokal.db.util.CursorGetter;
 import com.vokal.db.DatabaseHelper;
 import com.vokal.db.SimpleContentProvider;
 
