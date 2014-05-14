@@ -26,8 +26,6 @@ import java.io.FileDescriptor;
 import java.io.PrintWriter;
 import java.util.Arrays;
 
-import timber.log.Timber;
-
 
 /**
  * A copy of the framework's {@link android.content.CursorLoader} class. Copied because
@@ -43,8 +41,6 @@ public class ObjectCursorLoader<T> extends AsyncTaskLoader<ObjectCursor<T>> {
     final   String   mSelection;
     final   String[] mSelectionArgs;
     final   String   mSortOrder;
-
-    private boolean  mDebugging = false;
 
     /** The underlying cursor that contains the data. */
     ObjectCursor<T> mCursor;
@@ -88,7 +84,6 @@ public class ObjectCursorLoader<T> extends AsyncTaskLoader<ObjectCursor<T>> {
         final Cursor inner = getContext().getContentResolver().query(mUri, mProjection,
                                                                      mSelection, mSelectionArgs, mSortOrder);
         if (inner == null) {
-            Timber.w("inner Cursor == null");
             return null;
         }
 
@@ -105,8 +100,6 @@ public class ObjectCursorLoader<T> extends AsyncTaskLoader<ObjectCursor<T>> {
                 Thread.sleep(mDebugDelayMs);
             }
         } catch (InterruptedException e) {}
-
-        debug(inner);
 
         return cursor;
     }
@@ -150,7 +143,6 @@ public class ObjectCursorLoader<T> extends AsyncTaskLoader<ObjectCursor<T>> {
             deliverResult(mCursor);
         }
         if (takeContentChanged() || mCursor == null) {
-            Timber.d("Changed: %s", mUri);
             forceLoad();
         }
     }
@@ -195,25 +187,6 @@ public class ObjectCursorLoader<T> extends AsyncTaskLoader<ObjectCursor<T>> {
         writer.println(Arrays.toString(mSelectionArgs));
         writer.print(prefix); writer.print("mSortOrder="); writer.println(mSortOrder);
         writer.print(prefix); writer.print("mCursor="); writer.println(mCursor);
-    }
-
-    public void enableDebug(boolean aDebug) {
-        mDebugging = aDebug;
-    }
-
-    private void debug(Cursor cursor) {
-        if (mDebugging) {
-            Timber.d("mUri: " + mUri);
-            Timber.d("mProjection: " + Arrays.toString(mProjection));
-            Timber.d("mSelection: " + mSelection);
-            Timber.d("mSelectionArgs: " + Arrays.toString(mSelectionArgs));
-            Timber.d("mSortOrder: " + mSortOrder);
-            if (cursor != null) {
-                Timber.d("innerCursor: " + cursor.getCount());
-            } else {
-                Timber.d("innerCursor: null");
-            }
-        }
     }
 
     /**
