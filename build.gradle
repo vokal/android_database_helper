@@ -20,6 +20,11 @@ android {
         versionCode 1
         versionName "1.0.3"
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
 }
 
 repositories {
@@ -34,3 +39,4 @@ def upload = new File('upload.gradle')
 if (upload.exists()) {
     apply from: 'upload.gradle'
 }
+

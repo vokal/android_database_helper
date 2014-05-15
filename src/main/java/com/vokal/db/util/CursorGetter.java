@@ -9,7 +9,7 @@ import static android.text.TextUtils.isEmpty;
 
 public class CursorGetter {
 
-    private SimpleArrayMap<String, Integer> mMap = new SimpleArrayMap(12);
+    private SimpleArrayMap<String, Integer> mMap = new SimpleArrayMap<>(12);
     private Cursor mCursor;
     private String mTable;
 
