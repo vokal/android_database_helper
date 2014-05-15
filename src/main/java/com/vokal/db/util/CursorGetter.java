@@ -3,12 +3,14 @@ package com.vokal.db.util;
 import android.annotation.TargetApi;
 import android.database.Cursor;
 import android.os.Build;
+import android.support.v4.util.SimpleArrayMap;
 
 import static android.text.TextUtils.isEmpty;
 
 public class CursorGetter {
 
-    private final Cursor mCursor;
+    private SimpleArrayMap<String, Integer> mMap = new SimpleArrayMap(12);
+    private Cursor mCursor;
     private String mTable;
 
     public CursorGetter(Cursor aCursor) {
@@ -18,6 +20,10 @@ public class CursorGetter {
     public CursorGetter(Cursor aCursor, String aTableName) {
         mCursor = aCursor;
         setTable(aTableName);
+    }
+
+    public void swapCursor(Cursor c) {
+        mCursor = c;
     }
 
     public CursorGetter setTable(String aTableName) {
@@ -31,6 +37,10 @@ public class CursorGetter {
 
     public boolean hasColumn(String aColumn) {
         return getColumnIndex(aColumn) != -1;
+    }
+
+    public boolean getBoolean(String aColumn) {
+        return mCursor.getInt(getColumnIndex(aColumn)) != 0;
     }
 
     public String getString(String aColumn) {
@@ -67,9 +77,20 @@ public class CursorGetter {
 
     private int getColumnIndex(String aColumn) {
         if (mTable != null) {
-            return mCursor.getColumnIndex(mTable.concat(aColumn));
+            aColumn = mTable.concat(aColumn);
         }
-        return mCursor.getColumnIndex(aColumn);
+
+        if (mMap.containsKey(aColumn)) {
+            return mMap.get(aColumn);
+        } 
+
+        int i = mCursor.getColumnIndex(aColumn);
+        mMap.put(aColumn, i);
+        return i;
+    }
+
+    public void getClearColumnCache() {
+        mMap.clear();
     }
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
