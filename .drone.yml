@@ -1,0 +1,7 @@
+image: docker.vokalinteractive.com/android:latest
+env:
+    - ANDROID_HOME=/usr/local/android-sdk
+script:
+    - ./gradlew build remoteDebugTest
+cache:
+    - /root/.gradle/
