@@ -31,6 +31,8 @@ import java.util.List;
  */
 public class ObjectCursor<T> extends CursorWrapper {
 
+    private final CursorGetter mGetter = new CursorGetter();
+
     /** The cache for objects in the underlying cursor. */
     private final SparseArray<T> mCache;
 
@@ -82,8 +84,10 @@ public class ObjectCursor<T> extends CursorWrapper {
         if (prev != null) {
             return prev;
         }
+
+        mGetter.swapCursor(c, false);
         // Get the object at the current position and add it to the cache.
-        final T model = mFactory.createFromCursor(c);
+        final T model = mFactory.createFromCursorGetter(mGetter);
         mCache.put(currentPosition, model);
         return model;
     }

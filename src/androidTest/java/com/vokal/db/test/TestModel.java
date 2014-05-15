@@ -5,6 +5,8 @@ import android.content.ContentValues;
 
 import com.vokal.db.AbstractDataModel;
 import com.vokal.db.SQLiteTable;
+import com.vokal.db.util.CursorCreator;
+import com.vokal.db.util.CursorGetter;
 
 import java.lang.String;
 
@@ -27,6 +29,20 @@ public class TestModel extends AbstractDataModel {
         @Override
         public SQLiteTable updateTableSchema(SQLiteTable.Updater aUpdater, int aOldVersion) {
             return null;
+        }
+    };
+
+    public static final CursorCreator<TestModel> CURSOR_CREATOR = new CursorCreator<TestModel>() {
+        public TestModel createFromCursorGetter(CursorGetter getter) {
+            TestModel model = new TestModel();
+            model.boolean1 = getter.getBoolean(COL_BOOLEAN);
+            model.double1 = getter.getDouble(COL_DOUBLE);
+            model.string1 = getter.getString(COL_STRING);
+            model.long1 = getter.getLong(COL_LONG);
+            model.int1 = getter.getInt(COL_INT);
+            model._id = getter.getLong("_id");
+
+            return model;
         }
     };
 

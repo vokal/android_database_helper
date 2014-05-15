@@ -12,6 +12,10 @@ public class CursorGetter {
     private SimpleArrayMap<String, Integer> mMap = new SimpleArrayMap<>(12);
     private Cursor mCursor;
     private String mTable;
+    
+    public CursorGetter() {
+        this(null, null);
+    }
 
     public CursorGetter(Cursor aCursor) {
         this(aCursor, null);
@@ -22,8 +26,11 @@ public class CursorGetter {
         setTable(aTableName);
     }
 
-    public void swapCursor(Cursor c) {
+    public void swapCursor(Cursor c, boolean flushCache) {
         mCursor = c;
+        if (flushCache) {
+            clearColumnCache();
+        }
     }
 
     public CursorGetter setTable(String aTableName) {
@@ -89,7 +96,7 @@ public class CursorGetter {
         return i;
     }
 
-    public void getClearColumnCache() {
+    public void clearColumnCache() {
         mMap.clear();
     }
 

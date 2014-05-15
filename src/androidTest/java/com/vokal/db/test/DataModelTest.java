@@ -7,6 +7,7 @@ import android.test.ProviderTestCase2;
 
 import com.vokal.db.AbstractDataModel;
 import com.vokal.db.util.CursorGetter;
+import com.vokal.db.util.ObjectCursor;
 import com.vokal.db.DatabaseHelper;
 import com.vokal.db.SimpleContentProvider;
 
@@ -40,13 +41,14 @@ public class DataModelTest extends ProviderTestCase2<SimpleContentProvider> {
         long id = testModel.getId();
 
         Cursor c = getMockContentResolver().query(DatabaseHelper.getContentUri(TestModel.class),null,null,null,null);
-        if (c.moveToFirst()) {
-            CursorGetter getter = new CursorGetter(c);
-            assertEquals(false, getter.getInt((TestModel.COL_BOOLEAN)) == 1);
-            assertEquals(2.3, getter.getDouble(TestModel.COL_DOUBLE));
-            assertEquals("test", getter.getString(TestModel.COL_STRING));
-            assertEquals(123123l, getter.getInt(TestModel.COL_LONG));
-            assertEquals(id, getter.getLong("_id"));
+        ObjectCursor<TestModel> cursor = new ObjectCursor<TestModel>(c, TestModel.CURSOR_CREATOR);
+        if (cursor.moveToFirst()) {
+            TestModel m = cursor.getModel();
+            assertEquals(false, m.isBoolean1());
+            assertEquals(2.3, m.getDouble1());
+            assertEquals("test", m.getString1());
+            assertEquals(123123l, m.getLong1());
+            assertEquals(id, m.getId());
         } else {
             assertFalse("cursor empty", true);
         }
