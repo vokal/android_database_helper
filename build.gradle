@@ -27,7 +27,6 @@ repositories {
 }
 
 dependencies {
-    compile 'com.jakewharton.timber:timber:2.2.2'
     compile 'com.android.support:support-v4:19.1.0'
 }
 
