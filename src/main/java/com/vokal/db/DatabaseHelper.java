@@ -222,6 +222,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     columns.add(c.getString(1));
                 } while (c.moveToNext());
             }
+            c.close();
         } else {
             Class tableClass = CLASS_MAP.get(aTableName);
             if (tableClass != null) {
