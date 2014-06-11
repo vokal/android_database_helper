@@ -92,8 +92,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
     }
 
     public Uri[] getNotificationUris() {
-        Uri[] uris = new Uri[mNotifyUris.size()];
-        mNotifyUris.toArray(uris);
+        Uri[] uris = mNotifyUris.toArray(new Uri[mNotifyUris.size()]);
         mNotifyUris.clear();
         return uris;
     }
