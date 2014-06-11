@@ -39,7 +39,6 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     protected DatabaseHelper mHelper;
 
-
     public static String getContentAuthority(Context aContext) {
         if (sContentAuthority == null) {
             sContentAuthority = DEFAULT_AUTHORITY;
@@ -152,11 +151,11 @@ public class SimpleContentProvider extends SQLiteContentProvider {
 
     @Override
     protected void notifyChange() {
-        Uri[] uris = new Uri[mNotifyUris.size()];
-        mNotifyUris.toArray(uris);
-        mNotifyUris.clear();
+        ContentResolver resolver = getContext().getContentResolver();
+        Uri[] uris = getNotificationUris();
         for (Uri uri : uris) {
-            getContext().getContentResolver().notifyChange(uri, null);
+            if (uri == null) continue;
+            resolver.notifyChange(uri, null);
         }
     }
 

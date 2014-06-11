@@ -39,7 +39,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
     private          SQLiteOpenHelper mOpenHelper;
     private volatile boolean          mNotifyChange;
 
-    protected final Set<Uri> mNotifyUris = Collections.synchronizedSet(new HashSet<Uri>());
+    private final Set<Uri> mNotifyUris = Collections.synchronizedSet(new HashSet<Uri>());
 
     protected SQLiteDatabase mDb;
 
@@ -85,6 +85,18 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
 
     protected abstract void notifyChange();
 
+    protected void addNotificationUri(Uri aUri) {
+        if (aUri != null) {
+            mNotifyUris.add(aUri);
+        }
+    }
+
+    public Uri[] getNotificationUris() {
+        Uri[] uris = mNotifyUris.toArray(new Uri[mNotifyUris.size()]);
+        mNotifyUris.clear();
+        return uris;
+    }
+
     public SQLiteOpenHelper getDatabaseHelper() {
         return mOpenHelper;
     }
@@ -104,7 +116,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 result = insertInTransaction(uri, values);
                 if (result != null) {
                     mNotifyChange = true;
-                    mNotifyUris.add(uri);
+                    addNotificationUri(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -116,7 +128,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             result = insertInTransaction(uri, values);
             if (result != null) {
                 mNotifyChange = true;
-                mNotifyUris.add(uri);
+                addNotificationUri(uri);
             }
         }
         return result;
@@ -132,7 +144,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 Uri result = insertInTransaction(uri, values[i]);
                 if (result != null) {
                     mNotifyChange = true;
-                    mNotifyUris.add(uri);
+                    addNotificationUri(uri);
                 }
                 boolean savedNotifyChange = mNotifyChange;
                 SQLiteDatabase savedDb = mDb;
@@ -160,7 +172,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = updateInTransaction(uri, values, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
-                    mNotifyUris.add(uri);
+                    addNotificationUri(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -172,7 +184,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = updateInTransaction(uri, values, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
-                mNotifyUris.add(uri);
+                addNotificationUri(uri);
             }
         }
 
@@ -190,7 +202,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
                 count = deleteInTransaction(uri, selection, selectionArgs);
                 if (count > 0) {
                     mNotifyChange = true;
-                    mNotifyUris.add(uri);
+                    addNotificationUri(uri);
                 }
                 mDb.setTransactionSuccessful();
             } finally {
@@ -202,7 +214,7 @@ public abstract class SQLiteContentProvider extends ContentProvider implements S
             count = deleteInTransaction(uri, selection, selectionArgs);
             if (count > 0) {
                 mNotifyChange = true;
-                mNotifyUris.add(uri);
+                addNotificationUri(uri);
             }
         }
         return count;
