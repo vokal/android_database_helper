@@ -1,0 +1,70 @@
+apply plugin: 'maven'
+apply plugin: 'signing'
+
+signing {
+    required { has("release") && gradle.taskGraph.hasTask("uploadArchives") }
+    sign configurations.archives
+}
+
+if (!hasProperty('sonatypeRepo')) {
+    sonatypeRepo = ""
+    sonatypeUsername = ""
+    sonatypePassword = ""
+}
+
+uploadArchives {
+    configuration = configurations.archives
+    repositories.mavenDeployer {
+        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        repository(url: sonatypeRepo) {
+            authentication(userName: sonatypeUsername, password: sonatypePassword)
+        }
+
+        pom.project {
+            name 'adhd'
+            packaging 'aar'
+            description 'Android Database Helper'
+            url 'https://www.github.com/vokalinteractive/android_database_helper'
+
+            groupId 'com.vokalinteractive'
+            artifactId 'adhd'
+            version android.defaultConfig.versionName
+
+            scm {
+                url = 'scm:git@https://www.github.com/vokalinteractive/android_database_helper.git'
+                connection 'git@https://www.github.com/vokalinteractive/android_database_helper.git'
+                developerConnection 'git@https://www.github.com/vokalinteractive/android_database_helper.git'
+            }
+
+            licenses {
+                license {
+                    name = 'MIT'
+                    url = 'http://opensource.org/licenses/MIT'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'nick-fedesna'
+                    name 'Nick Fedesna'
+                    email 'nick.fedesna@vokalinteractive.com'
+                }
+                developer {
+                    id 'DavidRyan'
+                    name 'David Ryan'
+                    email 'david.ryan@vokalinteractive.com'
+                }
+                developer {
+                    id 'Corey-Richmond'
+                    name 'Corey Richmond'
+                    email 'corey.richmond@vokalinteractive.com'
+                }
+                developer {
+                    id 'wmbest2'
+                    name 'William Best'
+                    email 'bill.best@vokalinteractive.com'
+                }
+            }
+        }
+    }
+}
