@@ -92,6 +92,37 @@ public class DataModelTest extends ProviderTestCase2<SimpleContentProvider> {
 
     }
 
+    public void testUpdate() {
+        TestModel testModel = new TestModel();
+        testModel.setBoolean1(false);
+        testModel.setDouble1(2.3);
+        testModel.setString1("test");
+        testModel.setLong1(123123l);
+        Uri uri = testModel.save(mContext);
+        assertNotNull(uri);
+
+        testModel.setBoolean1(true);
+        testModel.setDouble1(4.1);
+
+        uri = testModel.save(mContext);
+        assertNotNull(uri);
+
+        long id = testModel.getId();
+
+        Cursor c = getMockContentResolver().query(DatabaseHelper.getContentUri(TestModel.class),null,null,null,null);
+        ObjectCursor<TestModel> cursor = new ObjectCursor<TestModel>(c, TestModel.CURSOR_CREATOR);
+        if (cursor.moveToFirst()) {
+            TestModel m = cursor.getModel();
+            assertEquals(true, m.isBoolean1());
+            assertEquals(4.1, m.getDouble1());
+            assertEquals(id, m.getId());
+        } else {
+            assertFalse("cursor empty", true);
+        }
+
+
+    }
+
     public void testWipeDatabase() {
         TestModel testModel = new TestModel();
         testModel.setBoolean1(false);
@@ -141,6 +172,29 @@ public class DataModelTest extends ProviderTestCase2<SimpleContentProvider> {
         cursor2 = new ObjectCursor<Test2Model>(c, Test2Model.CURSOR_CREATOR);
         assertEquals(cursor2.moveToFirst(), false);
 
+
+    }
+
+    public void testAutoIncrement() {
+        TestModel testModel = new TestModel();
+        testModel.setBoolean1(false);
+        testModel.setDouble1(2.3);
+        testModel.setString1("test");
+        testModel.setLong1(123123l);
+        testModel.save(mContext);
+
+        long id = testModel.getId();
+
+        TestModel test2Model = new TestModel();
+        test2Model.setBoolean1(true);
+        test2Model.setDouble1(3.4);
+        test2Model.setString1("test2");
+        test2Model.setLong1(555444333);
+        test2Model.save(mContext);
+
+        long id2 = test2Model.getId();
+
+        assertEquals(id+1, id2);
 
     }
 
