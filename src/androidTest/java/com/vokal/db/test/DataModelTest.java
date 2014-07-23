@@ -198,4 +198,35 @@ public class DataModelTest extends ProviderTestCase2<SimpleContentProvider> {
 
     }
 
+    public void testUniqueness() {
+        Test2Model testModel = new Test2Model();
+        testModel.setBoolean1(false);
+        testModel.setDouble1(2.3);
+        testModel.setString1("test");
+        testModel.setLong1(123123l);
+        testModel.setInt1(12);
+        testModel.save(mContext);
+
+        assertEquals(testModel.getInt1(), 12);
+
+        Cursor c = getMockContentResolver().query(DatabaseHelper.getContentUri(Test2Model.class),null,null,null,null);
+        assertTrue(c.moveToFirst());
+        assertEquals(c.getCount(), 1);
+
+        Test2Model test2Model = new Test2Model();
+        test2Model.setBoolean1(true);
+        test2Model.setDouble1(3.4);
+        test2Model.setString1("test2");
+        test2Model.setLong1(555444333);
+        test2Model.setInt1(12);
+        test2Model.save(mContext);
+        assertEquals(test2Model.getInt1(), 12);
+
+        Cursor c2 = getMockContentResolver().query(DatabaseHelper.getContentUri(Test2Model.class),null,null,null,null);
+        ObjectCursor<Test2Model> cursor2 = new ObjectCursor<>(c2, Test2Model.CURSOR_CREATOR);
+        assertTrue(c2.moveToFirst());
+        assertEquals(c2.getCount(), 1);
+        assertEquals(cursor2.getModel().getDouble1(), 3.4);
+    }
+
 }

@@ -4,11 +4,13 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.10.+'
+        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.wmbest.gradle:rats:0.1.+'
     }
 }
 
 apply plugin: 'android-library'
+apply plugin: 'rats'
 
 android {
     compileSdkVersion 19
@@ -38,5 +40,10 @@ dependencies {
 def upload = new File('upload.gradle')
 if (upload.exists()) {
     apply from: 'upload.gradle'
+}
+
+rats {
+    server "https://rats:R4t5Test@vokalrats.ngrok.com"
+    count 5
 }
 
