@@ -8,8 +8,11 @@ import com.vokal.db.SQLiteTable;
 import com.vokal.db.util.CursorCreator;
 import com.vokal.db.util.CursorGetter;
 
+import com.vokal.db.GenerateHelpers;
+
 import java.lang.String;
 
+@GenerateHelpers
 public class TestModel extends AbstractDataModel {
 
     public static final SQLiteTable.TableCreator TABLE_CREATOR = new SQLiteTable.TableCreator() {

@@ -4,13 +4,15 @@ package com.vokal.db.test;
 import android.content.ContentValues;
 
 import com.vokal.db.AbstractDataModel;
+import com.vokal.db.GenerateHelpers;
 import com.vokal.db.SQLiteTable;
 import com.vokal.db.util.CursorCreator;
 import com.vokal.db.util.CursorGetter;
 
+@GenerateHelpers
 public class Test2Model extends AbstractDataModel {
 
-    public static final SQLiteTable.TableCreator TABLE_CREATOR = new SQLiteTable.TableCreator() {
+    public static final SQLiteTable.TableCreator TABLE_CREATOR = new Test2ModelHelpers.TableCreator() {
 
         @Override
         public SQLiteTable buildTableSchema(SQLiteTable.Builder aBuilder) {
