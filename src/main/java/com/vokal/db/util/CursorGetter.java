@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.os.Build;
 import android.support.v4.util.SimpleArrayMap;
 
+import java.util.Date;
+
 import static android.text.TextUtils.isEmpty;
 
 public class CursorGetter {
@@ -76,6 +78,14 @@ public class CursorGetter {
 
     public byte[] getBlob(String aColumn) {
         return mCursor.getBlob(getColumnIndex(aColumn));
+    }
+
+    public Date getDate(String aColumn) {
+        int i = getColumnIndex(aColumn);
+        if (i >= 0 && !mCursor.isNull(i)) {
+            return new Date(mCursor.getLong(i));
+        }
+        return null;
     }
 
     public boolean isNull(String aColumn) {
