@@ -8,7 +8,7 @@ import com.vokal.db.SQLiteTable;
 import com.vokal.db.util.CursorCreator;
 import com.vokal.db.util.CursorGetter;
 
-import com.vokal.db.GenerateHelpers;
+import com.vokal.db.annotations.GenerateHelpers;
 
 import java.lang.String;
 
@@ -55,11 +55,11 @@ public class TestModel extends AbstractDataModel {
     public static final String COL_LONG = "long1";
     public static final String COL_DOUBLE = "double1";
 
-    private String string1;
-    private boolean boolean1;
-    private int int1;
-    private long long1;
-    private double double1;
+    String string1;
+    boolean boolean1;
+    int int1;
+    long long1;
+    double double1;
 
     public long getId() {
         return _id;

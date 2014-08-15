@@ -1,4 +1,4 @@
-package com.vokal.db;
+package com.vokal.db.annotations;
  
 import java.lang.annotation.*;
  

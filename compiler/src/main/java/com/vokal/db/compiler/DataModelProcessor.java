@@ -49,7 +49,7 @@ import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.JavaFileObject;
 
-@SupportedAnnotationTypes("com.vokal.db.GenerateHelpers")
+@SupportedAnnotationTypes("com.vokal.db.annotations.GenerateHelpers")
 public class DataModelProcessor extends AbstractProcessor {
     private Elements elementUtils;
     private Types typeUtils;
@@ -78,7 +78,7 @@ public class DataModelProcessor extends AbstractProcessor {
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (!roundEnv.processingOver()) {
             Set<? extends Element> elements;
-            elements = roundEnv.getElementsAnnotatedWith(com.vokal.db.GenerateHelpers.class);
+            elements = roundEnv.getElementsAnnotatedWith(com.vokal.db.annotations.GenerateHelpers.class);
 
             Iterator<? extends Element> iter = elements.iterator();
             while (iter.hasNext()) {
@@ -111,7 +111,7 @@ public class DataModelProcessor extends AbstractProcessor {
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < name.length(); ++i) {
             if (i == 0 && name.charAt(0) == 'm' && name.length() > 1 && Character.isUpperCase(name.charAt(1))) {
-                b.append(name.charAt(i++));
+                b.append(name.charAt(++i));
             } else if (i == 0 || Character.isLowerCase(name.charAt(i))) {
                 b.append(name.charAt(i));
             } else {
@@ -127,16 +127,21 @@ public class DataModelProcessor extends AbstractProcessor {
         buffer.append(elementUtils.getPackageOf(e).getQualifiedName().toString());
         buffer.append(";\n");
         buffer.append("import com.vokal.db.SQLiteTable;\n");
+        buffer.append("import com.vokal.db.util.CursorGetter;\n");
         buffer.append("class ");
         buffer.append(e.getSimpleName());
         buffer.append("Helpers");
-        buffer.append(" {\n");
+        buffer.append(" implements android.provider.BaseColumns {\n");
         List<? extends Element> subElements; 
         subElements = e.getEnclosedElements();
         Iterator<? extends Element> iterChild = subElements.iterator();
         StringBuilder statics = new StringBuilder();
         StringBuilder cols = new StringBuilder("aBuilder");
         StringBuilder creator = new StringBuilder();
+
+        if (typeUtils.isSameType(((TypeElement) e).getSuperclass(), elementUtils.getTypeElement("com.vokal.db.AbstractDataModel").asType())) {
+            cols.append(".addIntegerColumn(_ID).primaryKey()\n");
+        }
 
         while (iterChild.hasNext()) {
             Element subElement = iterChild.next();
@@ -146,10 +151,14 @@ public class DataModelProcessor extends AbstractProcessor {
 
                 if (isValidType(subElement)) {
                     cols.append(".add");
-                    typeToString(subElement.asType(), cols, '$');
+                    typeToString(subElement.asType(), cols, true);
                     cols.append("Column(");
                     cols.append(name.toUpperCase());
                     cols.append(")\n");
+
+                    StringBuilder type = new StringBuilder();
+                    typeToString(subElement.asType(), type, false);
+                    creator.append(String.format(cursorLine, subElement.toString(), type.toString(), name.toUpperCase()));
                 }
             }
         }
@@ -160,6 +169,12 @@ public class DataModelProcessor extends AbstractProcessor {
         buffer.append("\n\n");
         buffer.append(String.format(builderClass, cols.toString()));
 
+        buffer.append("\n\n");
+
+        String n = e.getSimpleName().toString();
+
+        buffer.append(String.format(cursorClass, n, n, n, n, creator.toString()));
+
         buffer.append("}");
         return buffer.toString();
     }
@@ -169,6 +184,11 @@ public class DataModelProcessor extends AbstractProcessor {
         .append("@Override\npublic SQLiteTable updateTableSchema(SQLiteTable.Updater aUpdater, int aOldVersion) {\nreturn null;\n}\n};\n")
         .toString();
 
+    public static final String cursorClass = new StringBuilder("public static class CursorCreator implements com.vokal.db.util.CursorCreator<%s> {\n")
+        .append("@Override\npublic %s createFromCursorGetter(CursorGetter getter) {\n%s result = new %s();\n%s\nreturn result;\n}\n};\n")
+        .toString();
+
+    public static final String cursorLine = "result.%s = getter.get%s(%s);\n";
 
     void log(String msg) {
         processingEnv.getMessager().printMessage(Diagnostic.Kind.NOTE, msg);
@@ -188,7 +208,8 @@ public class DataModelProcessor extends AbstractProcessor {
      *     class names and for strings that will be used by runtime reflection.
      */
     public  void typeToString(final TypeMirror type, final StringBuilder result,
-            final char innerClassSeparator) {
+            final boolean simple) {
+        final char innerClassSeparator = '$';
         type.accept(new SimpleTypeVisitor6<Void, Void>() {
             @Override public Void visitDeclared(DeclaredType declaredType, Void v) {
                 TypeElement typeElement = (TypeElement) declaredType.asElement();
@@ -200,14 +221,23 @@ public class DataModelProcessor extends AbstractProcessor {
                         if (i != 0) {
                             result.append(", ");
                         }
-                        typeToString(typeArguments.get(i), result, innerClassSeparator);
+                        typeToString(typeArguments.get(i), result, simple);
                     }
                     result.append(">");
                 }
                 return null;
             }
             @Override public Void visitPrimitive(PrimitiveType primitiveType, Void v) {
-                result.append(box((PrimitiveType) type).getSimpleName());
+                if (simple) {
+                    result.append(simplebox((PrimitiveType) type).getSimpleName());
+                } else {
+                    String t = box((PrimitiveType) type).getSimpleName().toString();
+                    if ("Integer".equals(t)) {
+                        result.append("Int");
+                    } else {
+                        result.append(t);
+                    }
+                }
                 return null;
             }
             @Override public Void visitArray(ArrayType arrayType, Void v) {
@@ -215,7 +245,7 @@ public class DataModelProcessor extends AbstractProcessor {
                 if (type instanceof PrimitiveType) {
                     result.append(type.toString()); // Don't box, since this is an array.
                 } else {
-                    typeToString(arrayType.getComponentType(), result, innerClassSeparator);
+                    typeToString(arrayType.getComponentType(), result, simple);
                 }
                 result.append("[]");
                 return null;
@@ -266,7 +296,7 @@ public class DataModelProcessor extends AbstractProcessor {
             (isClass && VALID_TYPES.contains(((DeclaredType) element.asType()).asElement().getSimpleName().toString()));
     }
 
-    private  Class<?> box(PrimitiveType primitiveType) {
+    private  Class<?> simplebox(PrimitiveType primitiveType) {
         switch (primitiveType.getKind()) {
             case BYTE:
             case SHORT:
@@ -278,6 +308,29 @@ public class DataModelProcessor extends AbstractProcessor {
                 return Integer.class;
             case CHAR:
                 return String.class;
+            default:
+                throw new AssertionError();
+        }
+    }
+
+    private  Class<?> box(PrimitiveType primitiveType) {
+        switch (primitiveType.getKind()) {
+            case BYTE:
+                return Byte.class;
+            case SHORT:
+                return Short.class;
+            case INT:
+                return Integer.class;
+            case LONG:
+                return Long.class;
+            case FLOAT:
+                return Float.class;
+            case DOUBLE:
+                return Double.class;
+            case BOOLEAN:
+                return Boolean.class;
+            case CHAR:
+                return Character.class;
             default:
                 throw new AssertionError();
         }
