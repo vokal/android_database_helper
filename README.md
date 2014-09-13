@@ -32,11 +32,36 @@ Add optional metadata for name and version to provider:
 	</provider>
 ````
 
-There are several ways to begin a data model class:
+There are several ways to create a data model class:
 
  - extending `AbstractDataModel` is the quickest as it provides convenience methods (ie. save(), delete()), and it's a Parcelable object (see below)
  - implementing `DataModelInterface` gives you the easy table setup methods and the populateContentValues() method.  DatabaseHelper has static methods for save/update and bulk insert, but you will have to handle deletes manually.
  - adding a `TableCreator TABLE_CREATOR` constant to your model class if you cannot do either of the above.  Tables will be created/upgraded, but you will have to handle all other operations manually.
+  		      
+Register your model with DatabaseHelper and save your new content Uri:
+
+	public class MyApp extends Application {
+	
+	@Override
+	public void onCreate() {
+		super.onCreate();
+
+		DatabaseHelper.registerModel(this, User.class, MyModel.class);
+		DatabaseHelper.registerModel(this, SomeModel.class, "some_table_name")
+		
+	}
+
+After registering models you can get the content Uri via the DatabaseHelper or from a AbstractDataModel instance:
+
+	Uri userContentUri = DatabaseHelper.getContentUri(User.class);
+	
+	User user = new User();
+	Uri uri = user.getContentUri();
+	
+Once the AbstractDataModel has been saved, you can get the content item Uri:
+
+	user.save();
+	Uri uri = user.getContentItemUri();
 
 
 ###`AbstractDataModel implements DataModelInterface` :
@@ -65,19 +90,40 @@ Override `onCreateTable(..)` and `onUpgradeTable(...)` to define the column sche
                 	.build();
         }
         
+        // do not override or return null to do nothing on upgrade
         public SQLiteTable onTableUpgrade(SQLiteTable.Updater aUpdater, int aOldVersion) {
-        	return aBuilder.recreate().build();
+        	return aBuilder.recreate().build(); // will drop and re-create table
         }
     
 
     		@Override
     	public void populateContentValues(ContentValues aValues) {
-            // put fields in aValues
             super.populateContentValues(aValues);
+            
+            // put fields in aValues
             aValues.put(COL_NAME, name);
     	}
-    	
 ````
+
+Optionally make `AbstractDataModel` pass model fields via Parcelable overriding the Parcel constructor and writeToParcel:
+
+````java
+    
+    MyModel(Parcel bundle) {
+        super(bundle);
+
+        // read from bundle
+    }
+
+    @Override
+    public void writeToParcel(Parcel bundle, int flags) {
+        super.writeToParcel(bundle, flags);
+        
+        // write to bundle
+    }
+
+````
+
 
 ###`SQLiteTable.TableCreator TABLE_CREATOR`
 
@@ -105,46 +151,12 @@ For when you can't extend or implement your own data model class
 
         	@Override
         	public SQLiteTable updateTableSchema(SQLiteTable.Updater aUpdater, int aOldVersion) {
-            	return null;  // no upgrades yet...
+            	return null;  // does nothing on upgrade...
         	}
     	}
 	}   
-
-Optionally make `AbstractDataModel` pass model fields via Parcelableby overriding the Parcel constructor and writeToParcel:
-
-````java
-    
-    MyModel(Parcel bundle) {
-        super(bundle);
-
-        // read from bundle
-    }
-
-    @Override
-    public void writeToParcel(Parcel bundle, int flags) {
-        super.writeToParcel(bundle, flags);
-        
-        // write to bundle
-    }
-
-````
-	  		      
-Register your model with DatabaseHelper and save your new content Uri:
-
-	public class MyApp extends Application {
 	
-	@Override
-	public void onCreate() {
-		super.onCreate();
-
-		DatabaseHelper.registerModel(this, User.class, MyModel.class);
-		DatabaseHelper.registerModel(this, SomeModel.class, "some_table_name")
-		
-	}
-
-After registering models you can get the content Uri via the DatabaseHelper:
-
-	Uri userContentUri = DatabaseHelper.getContentUri(User.class);
+````
 	
 ###Upgrades:
 
@@ -187,7 +199,9 @@ Implement the updateTableSchema using Updater and add to provideContentValues:
 			aValues.put(COL_EMAIL, email);
 			aValues.put(COL_PHONE, phone);
 		}
-	}		
+	}
+	
+Returning `aUpgrader.recreate().build()` will cause the table to be dropped and recreated on upgrades.  Returning `null` causes nothing to happen on upgrade (ie. schema hasn't changed).
 	
 ###Joins:
 	
@@ -198,11 +212,12 @@ You can request a joined table content Uri:
 This would equates to (assuming table and column names):
 	
 	SELECT ... FROM transaction LEFT OUTER JOIN user ON (transaction.user_id = user._id) WHERE ...
-		
-__NOTE: this feature is in development and considered preview__  
-
-*column names in resulting cursors are not prefixed with table name so you could end up with multiple columns with the same name*
 	
+A default projection map will be generated that maps `table.column` to `table_column` to avoid Android issues with accessing the fields.  You can override this behavior by providing your own projection map with:
+
+	DatabaseHelper.setProjectionMap(Uri aContentUri, Map<String, String> aProjectionMap);
+	
+`CursorGetter` also provides a `setTable()` method for accessign these table prefixed fields.
 
 ##Builder/Updater Methods
 ---
@@ -238,7 +253,7 @@ Call column constraints immediately after adding a column.  Table constraints an
 ####Extras:
 	seed(ContentValues...)
 
-###SQLiteTable.Updater:
+###SQLiteTable.Upgrader:
 
 ####Column Adders:
 	addStringColumn(String)
@@ -259,6 +274,7 @@ Call column constraints immediately after adding a column.  Table constraints an
 
 ####Extras:
 	seed(ContentValues...)
+	recreate() // for drop table and recreate using Builder
 	
 
 	
