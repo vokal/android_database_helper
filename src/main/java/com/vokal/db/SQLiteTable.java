@@ -12,6 +12,12 @@ import static android.text.TextUtils.isEmpty;
 
 public class SQLiteTable {
 
+    static final int FIELD_TYPE_NULL    = 0;
+    static final int FIELD_TYPE_INTEGER = 1;
+    static final int FIELD_TYPE_FLOAT   = 2;
+    static final int FIELD_TYPE_STRING  = 3;
+    static final int FIELD_TYPE_BLOB    = 4;
+
     public interface TableCreator {
         public SQLiteTable buildTableSchema(Builder aBuilder);
         public SQLiteTable updateTableSchema(Updater aUpdater, int aOldVersion);
@@ -106,7 +112,7 @@ public class SQLiteTable {
                 }
 
                 if (col.not_null) {
-                    if (col.type == Cursor.FIELD_TYPE_NULL) {
+                    if (col.type == FIELD_TYPE_NULL) {
                         throw new IllegalStateException("Column '" + col.name +
                                                                 "' with type NULL cannot have NOT NULL constraint.");
                     }
@@ -161,7 +167,7 @@ public class SQLiteTable {
                 String colDef = getColumnDef(col);
 
                 if (col.not_null) {
-                    if (col.type == Cursor.FIELD_TYPE_NULL) {
+                    if (col.type == FIELD_TYPE_NULL) {
                         throw new IllegalStateException("Column '" + col.name +
                                                                 "' with type NULL cannot have NOT NULL constraint.");
                     }
@@ -196,10 +202,10 @@ public class SQLiteTable {
     protected String getColumnDef(Column column) {
         String type = "NULL";
         switch (column.type) {
-            case Cursor.FIELD_TYPE_INTEGER: type = "INTEGER"; break;
-            case Cursor.FIELD_TYPE_FLOAT: type = "REAL"; break;
-            case Cursor.FIELD_TYPE_STRING: type = "TEXT"; break;
-            case Cursor.FIELD_TYPE_BLOB: type = "BLOB"; break;
+            case FIELD_TYPE_INTEGER: type = "INTEGER"; break;
+            case FIELD_TYPE_FLOAT: type = "REAL"; break;
+            case FIELD_TYPE_STRING: type = "TEXT"; break;
+            case FIELD_TYPE_BLOB: type = "BLOB"; break;
         }
         return column.name.concat(" ").concat(type);
     }
@@ -222,25 +228,25 @@ public class SQLiteTable {
         //--- Column Adders
 
         public Builder addStringColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_STRING);
+            return column(name, FIELD_TYPE_STRING);
         }
 
         public Builder addIntegerColumn(String name) {
             if (BaseColumns._ID.equals(name))
                 androidIdDefined = true;
-            return column(name, Cursor.FIELD_TYPE_INTEGER);
+            return column(name, FIELD_TYPE_INTEGER);
         }
 
         public Builder addRealColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_FLOAT);
+            return column(name, FIELD_TYPE_FLOAT);
         }
 
         public Builder addBlobColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_BLOB);
+            return column(name, FIELD_TYPE_BLOB);
         }
 
         public Builder addNullColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_NULL);
+            return column(name, FIELD_TYPE_NULL);
         }
 
         private Builder column(String aName, int aType) {
@@ -345,7 +351,7 @@ public class SQLiteTable {
 
         public SQLiteTable build() {
             if (!androidIdDefined && isTableAbstractDataModel(mTable.mTableName)) {
-                Column col = new Column(BaseColumns._ID, Cursor.FIELD_TYPE_INTEGER);
+                Column col = new Column(BaseColumns._ID, FIELD_TYPE_INTEGER);
                 col.autoincrement = true;
                 if (!primaryKeyDefined) {
                     col.primary_key = true;
@@ -367,23 +373,23 @@ public class SQLiteTable {
         }
 
         public Updater addStringColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_STRING);
+            return column(name, FIELD_TYPE_STRING);
         }
 
         public Updater addIntegerColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_INTEGER);
+            return column(name, FIELD_TYPE_INTEGER);
         }
 
         public Updater addRealColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_FLOAT);
+            return column(name, FIELD_TYPE_FLOAT);
         }
 
         public Updater addBlobColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_BLOB);
+            return column(name, FIELD_TYPE_BLOB);
         }
 
         public Updater addNullColumn(String name) {
-            return column(name, Cursor.FIELD_TYPE_NULL);
+            return column(name, FIELD_TYPE_NULL);
         }
 
         private Updater column(String aName, int aType) {
@@ -392,7 +398,7 @@ public class SQLiteTable {
         }
 
         public Updater notNull() {
-            if (mLastColumn.type == Cursor.FIELD_TYPE_NULL) {
+            if (mLastColumn.type == FIELD_TYPE_NULL) {
                 throw new IllegalStateException("Column '" + mLastColumn.name +
                                                         "' with type NULL cannot have NOT NULL constraint)");
             }

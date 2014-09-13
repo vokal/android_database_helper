@@ -17,7 +17,6 @@ package com.vokal.db.util;
 
 
 import android.database.Cursor;
-import android.database.CursorWrapper;
 import android.util.SparseArray;
 
 import java.util.ArrayList;
