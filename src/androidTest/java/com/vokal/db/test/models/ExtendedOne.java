@@ -1,4 +1,4 @@
-package com.vokal.db.test;
+package com.vokal.db.test.models;
 
 
 import android.content.ContentValues;
@@ -8,7 +8,9 @@ import com.vokal.db.SQLiteTable;
 import com.vokal.db.util.CursorCreator;
 import com.vokal.db.util.CursorGetter;
 
-public class Test2Model extends AbstractDataModel {
+import java.lang.String;
+
+public class ExtendedOne extends AbstractDataModel {
 
     public static final SQLiteTable.TableCreator TABLE_CREATOR = new SQLiteTable.TableCreator() {
 
@@ -25,22 +27,15 @@ public class Test2Model extends AbstractDataModel {
         }
 
         @Override
-        public SQLiteTable updateTableSchema(SQLiteTable.Updater aUpdater, int aOldVersion) {
+        public SQLiteTable updateTableSchema(SQLiteTable.Upgrader aUpgrader, int aOldVersion) {
             return null;
         }
     };
 
-    public static final CursorCreator<Test2Model> CURSOR_CREATOR = new CursorCreator<Test2Model>() {
-        public Test2Model createFromCursorGetter(CursorGetter getter) {
-            Test2Model model = new Test2Model();
-            model.boolean1 = getter.getBoolean(COL_BOOLEAN);
-            model.double1 = getter.getDouble(COL_DOUBLE);
-            model.string1 = getter.getString(COL_STRING);
-            model.long1 = getter.getLong(COL_LONG);
-            model.int1 = getter.getInt(COL_INT);
-            model._id = getter.getLong("_id");
+    public static final CursorCreator<ExtendedOne> CURSOR_CREATOR = new CursorCreator<ExtendedOne>() {
+        public ExtendedOne createFromCursorGetter(CursorGetter getter) {
 
-            return model;
+            return new ExtendedOne(getter);
         }
     };
 
@@ -55,6 +50,17 @@ public class Test2Model extends AbstractDataModel {
     private int     int1;
     private long    long1;
     private double  double1;
+
+    public ExtendedOne() {}
+
+    protected ExtendedOne(CursorGetter getter) {
+        super(getter);
+        string1 = getter.getString(COL_STRING);
+        boolean1 = getter.getBoolean(COL_BOOLEAN);
+        int1 = getter.getInt(COL_INT);
+        long1 = getter.getLong(COL_LONG);
+        double1 = getter.getDouble(COL_DOUBLE);
+    }
 
     public long getId() {
         return _id;
@@ -104,7 +110,6 @@ public class Test2Model extends AbstractDataModel {
         this.double1 = double1;
     }
 
-
     @Override
     public void populateContentValues(ContentValues aValues) {
         aValues.put(COL_STRING, string1);
@@ -112,6 +117,5 @@ public class Test2Model extends AbstractDataModel {
         aValues.put(COL_INT, int1);
         aValues.put(COL_LONG, long1);
         aValues.put(COL_DOUBLE, double1);
-        super.populateContentValues(aValues);
     }
 }

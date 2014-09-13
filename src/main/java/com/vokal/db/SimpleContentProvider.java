@@ -288,4 +288,9 @@ public class SimpleContentProvider extends SQLiteContentProvider {
         System.arraycopy(newValues, 0, result, originalValues.length, newValues.length);
         return result;
     }
+
+    @Override
+    public void shutdown() {
+        mHelper.close();
+    }
 }

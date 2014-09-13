@@ -3,6 +3,7 @@ package com.vokal.db;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.provider.BaseColumns;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
 import java.util.ArrayList;
@@ -19,8 +20,8 @@ public class SQLiteTable {
     static final int FIELD_TYPE_BLOB    = 4;
 
     public interface TableCreator {
-        public SQLiteTable buildTableSchema(Builder aBuilder);
-        public SQLiteTable updateTableSchema(Updater aUpdater, int aOldVersion);
+        public @Nullable SQLiteTable buildTableSchema(Builder aBuilder);
+        public @Nullable SQLiteTable updateTableSchema(Upgrader aUpgrader, int aOldVersion);
     }
 
     public static class Column {
@@ -254,9 +255,17 @@ public class SQLiteTable {
             return this;
         }
 
+        private void checkColumn(String aCaller) {
+            if (mLastColumn == null) {
+                throw new IllegalStateException("You can only call '" + aCaller + "' after adding a column!");
+            }
+        }
+
         //--- Column Constraints
 
         public Builder primaryKey() {
+            checkColumn("primaryKey()");
+
             if (primaryKeyDefined)
                 throw new IllegalStateException("Table '" + mTable.mTableName + "' can only have one PRIMARY KEY");
             primaryKeyDefined = true;
@@ -266,31 +275,37 @@ public class SQLiteTable {
         }
 
         public Builder autoincrement() {
+            checkColumn("autoincrement()");
             mLastColumn.autoincrement = true;
             return this;
         }
 
         public Builder notNull() {
+            checkColumn("notNull()");
             mLastColumn.not_null = true;
             return this;
         }
 
         public Builder unique() {
+            checkColumn("unique()");
             mLastColumn.unique = true;
             return this;
         }
 
         public Builder defaultValue(String aString) {
+            checkColumn("defaultValue()");
             mLastColumn.default_value = String.format("'%s'", aString);
             return this;
         }
 
         public Builder defaultValue(long aInteger) {
+            checkColumn("defaultValue()");
             mLastColumn.default_value = Long.toString(aInteger);
             return this;
         }
 
         public Builder defaultValue(double aReal) {
+            checkColumn("defaultValue()");
             mLastColumn.default_value = Double.toString(aReal);
             return this;
         }
@@ -300,16 +315,19 @@ public class SQLiteTable {
 //        }
 
         public Builder defaultCurrentTime() {
+            checkColumn("defaultCurrentTime()");
             mLastColumn.default_value = "CURRENT_TIME";
             return this;
         }
 
         public Builder defaultCurrentDate() {
+            checkColumn("defaultCurrentDate()");
             mLastColumn.default_value = "CURRENT_DATE";
             return this;
         }
 
         public Builder defaultCurrentTimestamp() {
+            checkColumn("defaultCurrentTimestamp()");
             mLastColumn.default_value = "CURRENT_TIMESTAMP";
             return this;
         }
@@ -350,7 +368,7 @@ public class SQLiteTable {
         }
 
         public SQLiteTable build() {
-            if (!androidIdDefined && isTableAbstractDataModel(mTable.mTableName)) {
+            if (!androidIdDefined) {
                 Column col = new Column(BaseColumns._ID, FIELD_TYPE_INTEGER);
                 col.autoincrement = true;
                 if (!primaryKeyDefined) {
@@ -363,42 +381,49 @@ public class SQLiteTable {
         }
     }
 
-    public static class Updater {
+    public static class Upgrader {
 
         private final SQLiteTable mTable;
         private Column mLastColumn;
 
-        public Updater(String aTableName) {
+        public Upgrader(String aTableName) {
             mTable = new SQLiteTable(aTableName);
         }
 
-        public Updater addStringColumn(String name) {
+        public Upgrader addStringColumn(String name) {
             return column(name, FIELD_TYPE_STRING);
         }
 
-        public Updater addIntegerColumn(String name) {
+        public Upgrader addIntegerColumn(String name) {
             return column(name, FIELD_TYPE_INTEGER);
         }
 
-        public Updater addRealColumn(String name) {
+        public Upgrader addRealColumn(String name) {
             return column(name, FIELD_TYPE_FLOAT);
         }
 
-        public Updater addBlobColumn(String name) {
+        public Upgrader addBlobColumn(String name) {
             return column(name, FIELD_TYPE_BLOB);
         }
 
-        public Updater addNullColumn(String name) {
+        public Upgrader addNullColumn(String name) {
             return column(name, FIELD_TYPE_NULL);
         }
 
-        private Updater column(String aName, int aType) {
+        private Upgrader column(String aName, int aType) {
             mLastColumn = mTable.addColumn(aType, aName);
             return this;
         }
 
-        public Updater notNull() {
-            if (mLastColumn.type == FIELD_TYPE_NULL) {
+        private void checkColumn(String aCaller) {
+            if (mLastColumn == null) {
+                throw new IllegalStateException("You must call '" + aCaller + "' after adding a column!");
+            }
+        }
+
+        public Upgrader notNull() {
+            checkColumn("notNull()");
+            if (mLastColumn.type == Cursor.FIELD_TYPE_NULL) {
                 throw new IllegalStateException("Column '" + mLastColumn.name +
                                                         "' with type NULL cannot have NOT NULL constraint)");
             }
@@ -406,32 +431,35 @@ public class SQLiteTable {
             return this;
         }
 
-        public Updater defaultValue(String aString) {
+        public Upgrader defaultValue(String aString) {
+            checkColumn("defaultValue(String)");
             mLastColumn.default_value = String.format("'%s'", aString);
             return this;
         }
 
-        public Updater defaultValue(long aInteger) {
+        public Upgrader defaultValue(long aInteger) {
+            checkColumn("defaultValue(long)");
             mLastColumn.default_value = Long.toString(aInteger);
             return this;
         }
 
-        public Updater defaultValue(double aReal) {
+        public Upgrader defaultValue(double aReal) {
+            checkColumn("defaultValue(double)");
             mLastColumn.default_value = Double.toString(aReal);
             return this;
         }
 
-        public Updater nullHack(String aNullHack) {
+        public Upgrader nullHack(String aNullHack) {
             mTable.mNullHack = aNullHack;
             return this;
         }
 
-        public Updater seed(ContentValues... aSeed) {
+        public Upgrader seed(ContentValues... aSeed) {
             mTable.mSeed = aSeed;
             return this;
         }
 
-        public Updater index(String... aColumns) {
+        public Upgrader index(String... aColumns) {
             String index_name = mTable.mTableName.concat("_")
                     .concat(TextUtils.join("_", aColumns).toLowerCase(Locale.getDefault()))
                     .concat("_idx");
@@ -440,19 +468,53 @@ public class SQLiteTable {
             return this;
         }
 
-        public SQLiteTable build() {
-            return mTable;
+        public Upgrader recreate() {
+            mTable.mRecreateOnUpgrade = true;
+            return this;
         }
 
-        public SQLiteTable recreate() {
-            mTable.mRecreateOnUpgrade = true;
+        public SQLiteTable build() {
             return mTable;
         }
     }
 
-    private static boolean isTableAbstractDataModel(String aTableName) {
+    static boolean isTableAbstractDataModel(String aTableName) {
         Class clazz = DatabaseHelper.CLASS_MAP.get(aTableName);
         return clazz != null && AbstractDataModel.class.isAssignableFrom(clazz);
+    }
+
+    static boolean isTableDataModelInterface(String aTableName) {
+        Class clazz = DatabaseHelper.CLASS_MAP.get(aTableName);
+        return clazz != null && DataModelInterface.class.isAssignableFrom(clazz);
+    }
+
+    static TableCreator getDefaultCreator(final AbstractDataModel aModel) {
+        return new TableCreator() {
+            @Override
+            public SQLiteTable buildTableSchema(Builder aBuilder) {
+                return aModel.onTableCreate(aBuilder);
+            }
+
+            @Override
+            public SQLiteTable updateTableSchema(Upgrader aUpgrader, int aOldVersion) {
+                return aModel.onTableUpgrade(aUpgrader, aOldVersion);
+            }
+        };
+    }
+
+    static TableCreator getDefaultCreator(final DataModelInterface aModel) {
+        return new TableCreator() {
+            @Override
+            public SQLiteTable buildTableSchema(Builder aBuilder) {
+                return aModel.onTableCreate(aBuilder);
+            }
+
+            @Override
+            public SQLiteTable updateTableSchema(Upgrader aUpgrader, int aOldVersion) {
+                return aModel.onTableUpgrade(aUpgrader, aOldVersion);
+                // TODO: auto-recreate if null and schema has changed
+            }
+        };
     }
 
 }
