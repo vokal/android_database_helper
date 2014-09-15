@@ -1,5 +1,7 @@
 image: docker.vokalinteractive.com/android:latest
 env:
+    - ORG_GRADLE_PROJECT_ratsUser={{rats_user}}
+    - ORG_GRADLE_PROJECT_ratsPass={{rats_pass}}
     - ANDROID_HOME=/usr/local/android-sdk
 script:
     - ./gradlew build rDT
