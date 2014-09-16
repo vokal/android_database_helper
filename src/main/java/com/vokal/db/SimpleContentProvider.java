@@ -8,6 +8,7 @@ import android.database.DatabaseUtils;
 import android.database.sqlite.*;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.text.TextUtils;
 
 import java.util.*;
 
@@ -120,8 +121,8 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             String where = aSelection;
             String[] args = aSelectionArgs;
             if (match.item) {
-                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
-                args = DatabaseUtils.appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
+                where = concatenateWhere(where, "_ID=?");
+                args = appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
             }
 
             result = mDb.update(match.table, aValues, where, args);
@@ -139,8 +140,8 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             String where = aSelection;
             String[] args = aSelectionArgs;
             if (match.item) {
-                where = DatabaseUtils.concatenateWhere(where, "_ID=?");
-                args = DatabaseUtils.appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
+                where = concatenateWhere(where, "_ID=?");
+                args = appendSelectionArgs(args, new String[] {aUri.getLastPathSegment()});
             }
 
             result = mDb.delete(match.table, where, args);
@@ -184,7 +185,7 @@ public class SimpleContentProvider extends SQLiteContentProvider {
                 String id = aUri.getLastPathSegment();
                 if (id != null) {
                     builder.appendWhere(BaseColumns._ID + "=?");
-                    args = DatabaseUtils.appendSelectionArgs(args, new String[]{id});
+                    args = appendSelectionArgs(args, new String[]{id});
                 }
             }
 
@@ -258,5 +259,38 @@ public class SimpleContentProvider extends SQLiteContentProvider {
             table_2 = aTable2;
             column_2 = aColumn2;
         }
+    }
+
+    /**
+     * Concatenates two SQL WHERE clauses, handling empty or null values.
+     */
+    public static String concatenateWhere(String a, String b) {
+        if (TextUtils.isEmpty(a)) {
+            return b;
+        }
+        if (TextUtils.isEmpty(b)) {
+            return a;
+        }
+
+        return "(" + a + ") AND (" + b + ")";
+    }
+
+    /**
+     * Appends one set of selection args to another. This is useful when adding a selection
+     * argument to a user provided set.
+     */
+    public static String[] appendSelectionArgs(String[] originalValues, String[] newValues) {
+        if (originalValues == null || originalValues.length == 0) {
+            return newValues;
+        }
+        String[] result = new String[originalValues.length + newValues.length ];
+        System.arraycopy(originalValues, 0, result, 0, originalValues.length);
+        System.arraycopy(newValues, 0, result, originalValues.length, newValues.length);
+        return result;
+    }
+
+    @Override
+    public void shutdown() {
+        mHelper.close();
     }
 }
