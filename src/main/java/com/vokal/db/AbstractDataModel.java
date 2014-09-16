@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -19,15 +20,14 @@ public abstract class AbstractDataModel implements DataModelInterface, BaseColum
         public AbstractDataModel createFromParcel(Parcel source) {
             String tableName = source.readString();
             if (SQLiteTable.isTableAbstractDataModel(tableName)) {
-                Class clazz = DatabaseHelper.CLASS_MAP.get(tableName);
-                try {
-                    Constructor constructor = clazz.getConstructor(Parcel.class);
-                    return (AbstractDataModel) constructor.newInstance(source);
-                } catch (NoSuchMethodException
-                        | InvocationTargetException
-                        | InstantiationException
-                        | IllegalAccessException e) {
-                    e.printStackTrace();
+                Class<?> clazz = DatabaseHelper.CLASS_MAP.get(tableName);
+                if (clazz != null) {
+                    try {
+                        Constructor constructor = clazz.getConstructor(Parcel.class);
+                        return (AbstractDataModel) constructor.newInstance(source);
+                    } catch (Exception e) {
+                        Log.e(clazz.getSimpleName(), "No Parcel constructor, cannot un-parcel!");
+                    }
                 }
             }
             return new AbstractDataModel(source) {};
