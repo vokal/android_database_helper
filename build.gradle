@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.android.tools.build:gradle:0.14.+'
         classpath 'com.wmbest.gradle:rats:0.2.+'
     }
 }
@@ -14,13 +14,13 @@ apply plugin: 'rats'
 
 android {
     compileSdkVersion 20
-    buildToolsVersion "20.0.0"
+    buildToolsVersion "21.1.0"
 
     defaultConfig {
         minSdkVersion 10
         targetSdkVersion 20
         versionCode 1
-        versionName "1.1.0"
+        versionName "1.1.1"
     }
 
     compileOptions {
@@ -34,7 +34,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:20.0.0'
+    compile 'com.android.support:support-v4:21.0.0'
 }
 
 def upload = new File('upload.gradle')

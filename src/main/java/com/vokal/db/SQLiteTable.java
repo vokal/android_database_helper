@@ -13,11 +13,11 @@ import static android.text.TextUtils.isEmpty;
 
 public class SQLiteTable {
 
-    static final int FIELD_TYPE_NULL    = 0;
-    static final int FIELD_TYPE_INTEGER = 1;
-    static final int FIELD_TYPE_FLOAT   = 2;
-    static final int FIELD_TYPE_STRING  = 3;
-    static final int FIELD_TYPE_BLOB    = 4;
+    public static final int FIELD_TYPE_NULL    = 0;
+    public static final int FIELD_TYPE_INTEGER = 1;
+    public static final int FIELD_TYPE_FLOAT   = 2;
+    public static final int FIELD_TYPE_STRING  = 3;
+    public static final int FIELD_TYPE_BLOB    = 4;
 
     public interface TableCreator {
         public @Nullable SQLiteTable buildTableSchema(Builder aBuilder);
@@ -74,7 +74,7 @@ public class SQLiteTable {
 
     // TODO: query columns after onCreate/onUpdate since Builder may not have been used to make SQL
 
-    protected ArrayList<Column> getColumns() {
+    public ArrayList<Column> getColumns() {
         return mColumns;
     }
 
@@ -92,7 +92,7 @@ public class SQLiteTable {
         mIndicesSQL.add(String.format("CREATE INDEX %s ON %s (%s);", aIndexName, mTableName, aColumns));
     }
 
-    protected String getCreateSQL() {
+    public String getCreateSQL() {
         if (isEmpty(mCreateSQL)) {
             ArrayList<String> columnDefs = new ArrayList<String>();
 
@@ -152,15 +152,15 @@ public class SQLiteTable {
         return mCreateSQL;
     }
 
-    protected ArrayList<String> getIndicesSQL() {
+    public ArrayList<String> getIndicesSQL() {
         return mIndicesSQL;
     }
 
-    protected ContentValues[] getSeedValues() {
+    public ContentValues[] getSeedValues() {
         return mSeed;
     }
 
-    protected String[] getUpdateSQL() {
+    public String[] getUpdateSQL() {
         if (mUpdateSQL == null) {
             ArrayList<String> columns = new ArrayList<String>();
 
@@ -211,7 +211,7 @@ public class SQLiteTable {
         return column.name.concat(" ").concat(type);
     }
 
-    protected boolean isCleanUpgrade() {
+    public boolean isCleanUpgrade() {
         return mRecreateOnUpgrade;
     }
 
