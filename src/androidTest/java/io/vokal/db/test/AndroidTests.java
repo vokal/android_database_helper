@@ -1,4 +1,4 @@
-package com.vokal.db.test;
+package io.vokal.db.test;
 
 import android.test.suitebuilder.TestSuiteBuilder;
 

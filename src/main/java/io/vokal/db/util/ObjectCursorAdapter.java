@@ -1,4 +1,4 @@
-package com.vokal.db.util;
+package io.vokal.db.util;
 
 import android.content.Context;
 import android.database.Cursor;

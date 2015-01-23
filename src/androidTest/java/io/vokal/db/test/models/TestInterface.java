@@ -1,11 +1,11 @@
-package com.vokal.db.test.models;
+package io.vokal.db.test.models;
 
 import android.content.ContentValues;
 
-import com.vokal.db.DataModelInterface;
-import com.vokal.db.SQLiteTable;
-import com.vokal.db.util.CursorCreator;
-import com.vokal.db.util.CursorGetter;
+import io.vokal.db.DataModelInterface;
+import io.vokal.db.SQLiteTable;
+import io.vokal.db.util.CursorCreator;
+import io.vokal.db.util.CursorGetter;
 
 public class TestInterface extends BaseModel implements DataModelInterface {
 

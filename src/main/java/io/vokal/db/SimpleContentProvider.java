@@ -1,10 +1,9 @@
-package com.vokal.db;
+package io.vokal.db;
 
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.*;
 import android.net.Uri;
 import android.provider.BaseColumns;

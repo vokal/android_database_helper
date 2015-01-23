@@ -1,12 +1,12 @@
-package com.vokal.db.test.models;
+package io.vokal.db.test.models;
 
 
 import android.content.ContentValues;
 
-import com.vokal.db.AbstractDataModel;
-import com.vokal.db.SQLiteTable;
-import com.vokal.db.util.CursorCreator;
-import com.vokal.db.util.CursorGetter;
+import io.vokal.db.AbstractDataModel;
+import io.vokal.db.SQLiteTable;
+import io.vokal.db.util.CursorCreator;
+import io.vokal.db.util.CursorGetter;
 
 import java.lang.String;
 

@@ -1,4 +1,4 @@
-package com.vokal.db;
+package io.vokal.db;
 
 import android.content.*;
 import android.database.Cursor;
@@ -11,15 +11,13 @@ import android.util.Log;
 import java.lang.reflect.Field;
 import java.util.*;
 
-import static com.vokal.db.SQLiteTable.TableCreator;
-
 public final class DatabaseHelper extends SQLiteOpenHelper {
 
-    protected static final ArrayList<String>            TABLE_NAMES     = new ArrayList<>();
-    protected static final HashMap<Class, String>       TABLE_MAP       = new HashMap<>();
-    protected static final HashMap<String, Class>       CLASS_MAP       = new HashMap<>();
-    protected static final HashMap<Class, Uri>          CONTENT_URI_MAP = new HashMap<>();
-    protected static final HashMap<Class, TableCreator> TABLE_CREATORS  = new HashMap<>();
+    protected static final ArrayList<String>                        TABLE_NAMES     = new ArrayList<>();
+    protected static final HashMap<Class, String>                   TABLE_MAP       = new HashMap<>();
+    protected static final HashMap<String, Class>                   CLASS_MAP       = new HashMap<>();
+    protected static final HashMap<Class, Uri>                      CONTENT_URI_MAP = new HashMap<>();
+    protected static final HashMap<Class, SQLiteTable.TableCreator> TABLE_CREATORS  = new HashMap<>();
 
     private static boolean isOpen;
 
@@ -143,7 +141,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
-            TableCreator creator = getTableCreator(entry.getKey());
+            SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
             if (creator != null) {
                 SQLiteTable.Builder builder = new SQLiteTable.Builder(entry.getValue());
                 SQLiteTable table = creator.buildTableSchema(builder);
@@ -176,7 +174,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
         }
 
         for (Map.Entry<Class, String> entry : TABLE_MAP.entrySet()) {
-            TableCreator creator = getTableCreator(entry.getKey());
+            SQLiteTable.TableCreator creator = getTableCreator(entry.getKey());
             if (creator == null) continue;
 
             SQLiteTable table = null;
@@ -229,16 +227,17 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
         isOpen = true;
     }
 
-    static @Nullable TableCreator getTableCreator(Class<?> aModelClass) {
+    static @Nullable
+    SQLiteTable.TableCreator getTableCreator(Class<?> aModelClass) {
         if (TABLE_CREATORS.containsKey(aModelClass)) {
             return TABLE_CREATORS.get(aModelClass);
         }
 
-        TableCreator creator = null;
+        SQLiteTable.TableCreator creator = null;
 
         try {
             Field f = aModelClass.getField("TABLE_CREATOR");
-            creator = (TableCreator) f.get(null);
+            creator = (SQLiteTable.TableCreator) f.get(null);
         } catch (Throwable e) {
             // continue
         }
@@ -282,7 +281,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
         } else {
             Class tableClass = CLASS_MAP.get(aTableName);
             if (tableClass != null) {
-                TableCreator creator = getTableCreator(tableClass);
+                SQLiteTable.TableCreator creator = getTableCreator(tableClass);
                 if (creator != null) {
                     SQLiteTable create = creator.buildTableSchema(new SQLiteTable.Builder(aTableName));
                     if (create != null) {

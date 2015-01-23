@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.vokal.db.util;
+package io.vokal.db.util;
 
 /**
  * An object that knows how to create its implementing class using a single row of a cursor alone.
