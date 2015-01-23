@@ -1,4 +1,4 @@
-package com.vokal.db.test;
+package io.vokal.db.test;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -7,9 +7,9 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.test.ProviderTestCase2;
 
-import com.vokal.db.*;
-import com.vokal.db.test.models.*;
-import com.vokal.db.util.ObjectCursor;
+import io.vokal.db.*;
+import io.vokal.db.test.models.*;
+import io.vokal.db.util.ObjectCursor;
 
 import java.util.ArrayList;
 import java.util.Date;

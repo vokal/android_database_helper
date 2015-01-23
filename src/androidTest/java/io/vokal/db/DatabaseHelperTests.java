@@ -1,4 +1,4 @@
-package com.vokal.db;
+package io.vokal.db;
 
 import android.content.*;
 import android.database.Cursor;
@@ -10,8 +10,8 @@ import android.util.Log;
 
 import java.util.*;
 
-import com.vokal.db.test.models.*;
-import com.vokal.db.util.CursorGetter;
+import io.vokal.db.test.models.*;
+import io.vokal.db.util.CursorGetter;
 
 public class DatabaseHelperTests extends ProviderTestCase2<SimpleContentProvider> {
 

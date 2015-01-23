@@ -1,4 +1,4 @@
-package com.vokal.db.test;
+package io.vokal.db.test;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -8,9 +8,9 @@ import android.test.ProviderTestCase2;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.vokal.db.*;
-import com.vokal.db.test.models.*;
-import com.vokal.db.util.ObjectCursor;
+import io.vokal.db.*;
+import io.vokal.db.test.models.*;
+import io.vokal.db.util.ObjectCursor;
 
 public class DataModelInterfaceTests extends ProviderTestCase2<SimpleContentProvider> {
 

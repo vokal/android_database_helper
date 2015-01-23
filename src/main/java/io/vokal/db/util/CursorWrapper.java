@@ -1,4 +1,4 @@
-package com.vokal.db.util;
+package io.vokal.db.util;
 
 /*
  * Copyright (C) 2006 The Android Open Source Project

@@ -1,4 +1,4 @@
-package com.vokal.db.test.models;
+package io.vokal.db.test.models;
 
 import java.util.Date;
 

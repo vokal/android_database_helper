@@ -1,4 +1,4 @@
-package com.vokal.db;
+package io.vokal.db;
 
 import android.content.*;
 import android.net.Uri;
@@ -8,10 +8,9 @@ import android.provider.BaseColumns;
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
-import com.vokal.db.util.CursorGetter;
+import io.vokal.db.util.CursorGetter;
 
 public abstract class AbstractDataModel implements DataModelInterface, BaseColumns, Parcelable {
 
